@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Computers List</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Debug: Check if stations exist -->
+    <!-- Remove this debug section after testing -->
+    <div class="alert alert-info d-none">
+        Debug: Stations count = {{ stations|length }}
+        {% for station in stations %}
+            Station: {{ station.name }}
+        {% endfor %}
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card history-card">
+                <div class="card-body py-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Filter by Status</label>
+                            <select class="form-select form-select-sm" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="on-service">On Service</option>
+                                <option value="backup">Backup</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Filter by Station</label>
+                            <select class="form-select form-select-sm" id="stationFilter">
+                                <option value="all">All Stations</option>
+                                {% if stations %}
+                                    {% for station in stations %}
+                                    <option value="{{ station.name }}">{{ station.name }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="none">No stations available</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted mb-1">Search</label>
+                            <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search by name, user, processor...">
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of the template remains the same -->
+    {% if computers %}
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="computersTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Assigned User</th>
+                    <th>Status</th>
+                    <th>Processor</th>
+                    <th>RAM</th>
+                    <th>Station</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for computer in computers %}
+                <tr class="computer-row" 
+                    data-status="{{ computer.status }}"
+                    data-station="{{ computer.station_name if computer.station_name else 'Station ' + computer.station_id|string }}"
+                    data-search="{{ computer.name }} {{ computer.assigned_user }} {{ computer.processor }} {{ computer.ram }} {{ computer.station_name }} {{ computer.station_id }}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ computer.name }}</td>
+                    <td>{{ computer.assigned_user or 'Not assigned' }}</td>
+                    <td>
+                        {% if computer.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif computer.status == 'on-service' %}
+                            <span class="badge bg-warning">On Service</span>
+                        {% elif computer.status == 'backup' %}
+                            <span class="badge bg-info">Backup</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ computer.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ computer.processor }}</td>
+                    <td>{{ computer.ram }}</td>
+                    <td>
+                        {% if computer.station_name %}
+                            {{ computer.station_name }}
+                        {% else %}
+                            Station {{ computer.station_id }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.view_computer', equipment_id=computer.id) }}" class="btn btn-info btn-sm">View</a>
+                        <a href="{{ url_for('admin.edit_computer', equipment_id=computer.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <small class="text-muted" id="resultsCount">
+            Showing {{ computers|length }} of {{ computers|length }} computers
+        </small>
+    </div>
+    {% else %}
+    <p>No computers found.</p>
+    {% endif %}
+</div>
+
+<script>
+    function filterTable() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const stationFilter = document.getElementById('stationFilter').value;
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        const rows = document.querySelectorAll('#computersTable tbody .computer-row');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const station = row.getAttribute('data-station').toLowerCase();
+            const searchData = row.getAttribute('data-search').toLowerCase();
+            
+            let showRow = true;
+            
+            // Status filter
+            if (statusFilter !== 'all' && status !== statusFilter) {
+                showRow = false;
+            }
+            
+            // Station filter
+            if (stationFilter !== 'all' && !station.includes(stationFilter.toLowerCase())) {
+                showRow = false;
+            }
+            
+            // Search filter
+            if (searchTerm && !searchData.includes(searchTerm)) {
+                showRow = false;
+            }
+            
+            if (showRow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('resultsCount').textContent = `Showing ${visibleCount} of ${rows.length} computers`;
+    }
+
+    function clearFilters() {
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('stationFilter').value = 'all';
+        document.getElementById('searchInput').value = '';
+        filterTable();
+    }
+
+    // Initialize filters
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+        document.getElementById('stationFilter').addEventListener('change', filterTable);
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+    });
+</script>
+
+<style>
+    .history-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+</style>
+{% endblock %}

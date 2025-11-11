@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Equipment Transfer - Najmi International</title>
+  <style>
+    :root {
+      --najmi-primary: #1a365d;
+      --najmi-secondary: #2d74da;
+    }
+    .transfer-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+    .btn-najmi-primary {
+      background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center py-3">
+          <div>
+            <h2 class="mb-1 fw-bold text-dark">
+              <i class="bi bi-arrow-left-right me-2"></i>Equipment Transfer
+            </h2>
+            <p class="text-muted mb-0">Transfer equipment between stations</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <a href="{{ url_for('admin.transfer_history') }}" class="btn btn-outline-primary">
+              <i class="bi bi-clock-history me-2"></i>Transfer History
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transfer Form -->
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card transfer-card">
+          <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 text-dark">
+              <i class="bi bi-truck me-2"></i>Transfer Equipment
+            </h5>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+              <div class="row">
+                <!-- Device Type -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Equipment Type *</label>
+                  <select class="form-select" name="equipment_type" required id="equipmentType">
+                    <option value="">Select Type</option>
+                    <option value="computer">Computer</option>
+                    <option value="printer">Printer</option>
+                    <option value="monitor">Monitor</option>
+                    <option value="other">Other Equipment</option>
+                  </select>
+                </div>
+
+                <!-- Source Station -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">From Station *</label>
+                  <select class="form-select" name="from_station_id" required id="fromStation">
+                    <option value="">Select Source Station</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}">{{ station.name }} - {{ station.location }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Device Selection (for computers and printers) -->
+              <div class="mb-3" id="deviceSelection">
+                <label class="form-label">Select Device *</label>
+                <select class="form-select" name="device_id" id="deviceSelect">
+                  <option value="">Select a device type and station first</option>
+                </select>
+              </div>
+
+              <!-- Additional Equipment Details (for monitors and other) -->
+              <div class="mb-3" id="additionalEquipment" style="display: none;">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Equipment Name *</label>
+                    <input type="text" class="form-control" name="additional_name" 
+                           placeholder="e.g., Dell Monitor, HP Keyboard, etc.">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Serial Number (Optional)</label>
+                    <input type="text" class="form-control" name="additional_serial" 
+                           placeholder="Enter serial number if available">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Destination Station -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">To Station *</label>
+                  <select class="form-select" name="to_station_id" required id="toStation">
+                    <option value="">Select Destination Station</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}">{{ station.name }} - {{ station.location }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- Transfer Date -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Transfer Date *</label>
+                  <input type="date" class="form-control" name="transfer_date" 
+                         value="{{ today }}" required>
+                </div>
+              </div>
+
+              <!-- Reason for Transfer -->
+              <div class="mb-3">
+                <label class="form-label">Reason for Transfer *</label>
+                <textarea class="form-control" name="transfer_reason" rows="3" 
+                          placeholder="Explain why this equipment is being transferred..." required></textarea>
+              </div>
+
+              <!-- Additional Notes -->
+              <div class="mb-3">
+                <label class="form-label">Additional Notes</label>
+                <textarea class="form-control" name="additional_notes" rows="2" 
+                          placeholder="Any additional information about this transfer..."></textarea>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-najmi-primary">
+                  <i class="bi bi-check-circle me-2"></i>Complete Transfer
+                </button>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-x-circle me-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const computers = {{ computers|tojson }};
+    const printers = {{ printers|tojson }};
+    const today = "{{ today }}";
+
+    // Toggle between device selection and additional equipment
+    document.getElementById('equipmentType').addEventListener('change', function() {
+      const deviceSelection = document.getElementById('deviceSelection');
+      const additionalEquipment = document.getElementById('additionalEquipment');
+      
+      if (this.value === 'monitor' || this.value === 'other') {
+        deviceSelection.style.display = 'none';
+        additionalEquipment.style.display = 'block';
+        // Make additional name required
+        document.querySelector('input[name="additional_name"]').required = true;
+        // Make device selection not required
+        document.getElementById('deviceSelect').required = false;
+      } else {
+        deviceSelection.style.display = 'block';
+        additionalEquipment.style.display = 'none';
+        // Make device selection required
+        document.getElementById('deviceSelect').required = true;
+        // Make additional name not required
+        document.querySelector('input[name="additional_name"]').required = false;
+        
+        // Trigger device filtering
+        filterDevicesByStation();
+      }
+    });
+
+    // Filter devices by source station
+    function filterDevicesByStation() {
+      const equipmentType = document.getElementById('equipmentType').value;
+      const fromStationId = document.getElementById('fromStation').value;
+      const deviceSelect = document.getElementById('deviceSelect');
+      
+      deviceSelect.innerHTML = '<option value="">Select a device</option>';
+      
+      if (!equipmentType || !fromStationId) return;
+      
+      const devices = equipmentType === 'computer' ? computers : printers;
+      
+      const filteredDevices = devices.filter(device => 
+        parseInt(device.station_id) === parseInt(fromStationId)
+      );
+      
+      filteredDevices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.id;
+        option.textContent = device.name;
+        deviceSelect.appendChild(option);
+      });
+
+      if (filteredDevices.length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "No devices found in this station";
+        option.disabled = true;
+        deviceSelect.appendChild(option);
+      }
+    }
+
+    // Event listeners for station changes
+    document.getElementById('fromStation').addEventListener('change', function() {
+      const equipmentType = document.getElementById('equipmentType').value;
+      if (equipmentType === 'computer' || equipmentType === 'printer') {
+        filterDevicesByStation();
+      }
+    });
+
+    // Prevent same station transfer
+    document.getElementById('toStation').addEventListener('change', function() {
+      const fromStation = document.getElementById('fromStation').value;
+      const toStation = this.value;
+      
+      if (fromStation && toStation && fromStation === toStation) {
+        alert('Source and destination stations cannot be the same!');
+        this.value = '';
+      }
+    });
+  </script>
+</body>
+</html>

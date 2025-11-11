@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header with Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Printers List</h3>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <a href="{{ url_for('admin.add_printer', station_id=1) }}" class="btn btn-success mb-3">Add Printer</a>
+
+    {% if printers %}
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Serial Number</th>
+                <th>Year Purchased</th>
+                <th>Status</th>
+                <th>Station</th>
+                <th style="width: 150px;">Notes</th>
+                <th style="width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for printer in printers %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ printer.name }}</td>
+                <td>{{ printer.serial_number }}</td>
+                <td>{{ printer.year_purchased }}</td>
+                <td>{{ printer.status }}</td>
+                <td>
+                    {% if printer.station_name %}
+                        {{ printer.station_name }}
+                    {% else %}
+                        Station {{ printer.station_id }}
+                    {% endif %}
+                </td>
+                <td style="width: 150px;">
+                    <span class="d-inline-block text-truncate" style="max-width: 140px;">
+                        {{ printer.notes or 'N/A' }}
+                    </span>
+                </td>
+                <td style="width: 120px;">
+                    <div class="d-flex gap-1">
+                        <a href="{{ url_for('admin.view_printer', equipment_id=printer.id) }}" class="btn btn-info btn-sm">View</a>
+                        <a href="{{ url_for('admin.edit_printer', equipment_id=printer.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No printers found.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+<!-- templates/equipment_records.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">
+      {% if kind=='computer' %}Computer Details{% else %}Printer Details{% endif %}
+    </h5>
+  </div>
+  <div class="card-body">
+    {% if kind == 'computer' %}
+      <p><strong>Device name:</strong> {{ item.computer_name }}</p>
+      <p><strong>Assigned User:</strong> {{ item.assigned_user }}</p>
+      <p><strong>Year Purchased:</strong> {{ item.year_purchased }}</p>
+      <hr>
+      <h6>Device Specifications</h6>
+      <p><strong>Processor:</strong> {{ item.processor }}</p>
+      <p><strong>Installed RAM:</strong> {{ item.installed_ram }}</p>
+      <p><strong>Device ID:</strong> {{ item.device_id }}</p>
+      <p><strong>Product ID:</strong> {{ item.product_id }}</p>
+      <p><strong>System type:</strong> {{ item.system_type }}</p>
+      <p><strong>Pen and touch:</strong> {{ item.pen_touch }}</p>
+      <hr>
+      <p><strong>Last serviced:</strong> {{ item.last_serviced or 'N/A' }}</p>
+      <p><strong>History:</strong> {{ item.history or 'No history recorded' }}</p>
+    {% else %}
+      <p><strong>Printer Name:</strong> {{ item.printer_name }}</p>
+      <p><strong>Serial Number:</strong> {{ item.serial_number }}</p>
+      <p><strong>Year Purchased:</strong> {{ item.year_purchased }}</p>
+      <p><strong>Status:</strong> {{ item.status }}</p>
+      <p><strong>Notes:</strong> {{ item.notes or 'N/A' }}</p>
+    {% endif %}
+    <a class="btn btn-secondary mt-3" href="{{ url_for('user.station_dashboard', station_id=station_id) }}">Back</a>
+  </div>
+</div>
+{% endblock %}

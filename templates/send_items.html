@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Send Items - Najmi International</title>
+  <style>
+    .send-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+    .item-row {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+    }
+    .photo-preview {
+      max-width: 200px;
+      max-height: 150px;
+      border-radius: 8px;
+      border: 2px dashed #dee2e6;
+    }
+    .optional-badge {
+      font-size: 0.7em;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center py-3">
+          <div>
+            <h2 class="mb-1 fw-bold text-dark">
+              <i class="bi bi-send me-2"></i>Send Items
+            </h2>
+            <p class="text-muted mb-0">Track item transfers between stations</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <a href="{{ url_for('admin.send_items_history') }}" class="btn btn-outline-primary">
+              <i class="bi bi-clock-history me-2"></i>Send History
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Send Items Form -->
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card send-card">
+          <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 text-dark">
+              <i class="bi bi-truck me-2"></i>Create New Item Transfer
+            </h5>
+          </div>
+          <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+              <div class="row">
+                <!-- From Station -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">From Station *</label>
+                  <select class="form-select" name="from_station_id" required>
+                    <option value="">Select Source Station</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}">{{ station.name }} - {{ station.location }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <!-- To Station -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">To Station *</label>
+                  <select class="form-select" name="to_station_id" required>
+                    <option value="">Select Destination Station</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}">{{ station.name }} - {{ station.location }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Items List -->
+              <div class="mb-4">
+                <label class="form-label">Items Being Sent *</label>
+                <div id="itemsContainer">
+                  <div class="item-row">
+                    <div class="row g-2">
+                      <div class="col-md-5">
+                        <input type="text" class="form-control" name="item_names[]" 
+                               placeholder="Item name (e.g., HP Toner, Dell Keyboard)" required>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" class="form-control" name="item_quantities[]" 
+                               placeholder="Quantity" min="1" value="1" required>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="text" class="form-control" name="item_conditions[]" 
+                               placeholder="Condition (e.g., New, Used)">
+                      </div>
+                      <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeItem(this)">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addItem()">
+                  <i class="bi bi-plus-circle me-1"></i>Add Another Item
+                </button>
+              </div>
+
+              <div class="row">
+                <!-- Sender Information -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Sent By (Person) *</label>
+                  <input type="text" class="form-control" name="sent_by" 
+                         placeholder="Name of person sending items" required>
+                </div>
+
+                <!-- Expected Delivery -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Expected Delivery Date
+                    <span class="badge bg-secondary optional-badge">Optional</span>
+                  </label>
+                  <input type="date" class="form-control" name="expected_delivery_date" 
+                         min="{{ today }}">
+                  <small class="text-muted">You can update this later if delivery is delayed</small>
+                </div>
+              </div>
+
+              <div class="row">
+                <!-- Transfer Date -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Send Date *</label>
+                  <input type="date" class="form-control" name="send_date" 
+                         value="{{ today }}" required>
+                </div>
+
+                <!-- Receiver Information -->
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Receiving Person
+                    <span class="badge bg-secondary optional-badge">Optional</span>
+                  </label>
+                  <input type="text" class="form-control" name="received_by" 
+                         placeholder="Name of person who will receive items">
+                  <small class="text-muted">Can be filled when items are received</small>
+                </div>
+              </div>
+
+              <!-- Item Photos -->
+              <div class="mb-3">
+                <label class="form-label">Item Photos 
+                  <span class="badge bg-secondary optional-badge">Optional</span>
+                </label>
+                <input type="file" class="form-control" name="item_photos" id="itemPhotos" 
+                       accept="image/*" multiple onchange="previewPhotos()">
+                <small class="text-muted">You can select multiple photos (Max 5MB each)</small>
+                
+                <!-- Photo Preview -->
+                <div id="photoPreview" class="mt-2 d-flex gap-2 flex-wrap"></div>
+              </div>
+
+              <!-- Notes -->
+              <div class="mb-4">
+                <label class="form-label">Additional Notes
+                  <span class="badge bg-secondary optional-badge">Optional</span>
+                </label>
+                <textarea class="form-control" name="notes" rows="3" 
+                          placeholder="Any special instructions or notes about this transfer..."></textarea>
+              </div>
+
+              <!-- Important Information Alert -->
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Important:</strong> You can update the expected delivery date and receiving person information later if needed. Items will be marked as "In Transit" until received.
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                  <i class="bi bi-send-check me-2"></i>Send Items
+                </button>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-x-circle me-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let itemCount = 1;
+
+    function addItem() {
+      itemCount++;
+      const itemsContainer = document.getElementById('itemsContainer');
+      const newItem = document.createElement('div');
+      newItem.className = 'item-row';
+      newItem.innerHTML = `
+        <div class="row g-2">
+          <div class="col-md-5">
+            <input type="text" class="form-control" name="item_names[]" 
+                   placeholder="Item name (e.g., HP Toner, Dell Keyboard)" required>
+          </div>
+          <div class="col-md-3">
+            <input type="number" class="form-control" name="item_quantities[]" 
+                   placeholder="Quantity" min="1" value="1" required>
+          </div>
+          <div class="col-md-3">
+            <input type="text" class="form-control" name="item_conditions[]" 
+                   placeholder="Condition (e.g., New, Used)">
+          </div>
+          <div class="col-md-1">
+            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeItem(this)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      itemsContainer.appendChild(newItem);
+    }
+
+    function removeItem(button) {
+      if (itemCount > 1) {
+        button.closest('.item-row').remove();
+        itemCount--;
+      } else {
+        alert('At least one item is required.');
+      }
+    }
+
+    function previewPhotos() {
+      const input = document.getElementById('itemPhotos');
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = '';
+
+      if (input.files) {
+        Array.from(input.files).forEach(file => {
+          // Check file size (5MB limit)
+          if (file.size > 5 * 1024 * 1024) {
+            alert(`File "${file.name}" is too large. Maximum size is 5MB.`);
+            return;
+          }
+          
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.className = 'photo-preview';
+              preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    }
+
+    // Set minimum date for expected delivery to today
+    document.addEventListener('DOMContentLoaded', function() {
+      const expectedDateField = document.querySelector('input[name="expected_delivery_date"]');
+      if (expectedDateField) {
+        expectedDateField.min = new Date().toISOString().split('T')[0];
+      }
+    });
+
+    // Prevent same station transfer
+    document.querySelector('select[name="from_station_id"]').addEventListener('change', function() {
+      const toStation = document.querySelector('select[name="to_station_id"]');
+      if (this.value && toStation.value && this.value === toStation.value) {
+        alert('Source and destination stations cannot be the same!');
+        toStation.value = '';
+      }
+    });
+
+    document.querySelector('select[name="to_station_id"]').addEventListener('change', function() {
+      const fromStation = document.querySelector('select[name="from_station_id"]');
+      if (this.value && fromStation.value && this.value === fromStation.value) {
+        alert('Source and destination stations cannot be the same!');
+        this.value = '';
+      }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const fromStation = document.querySelector('select[name="from_station_id"]').value;
+      const toStation = document.querySelector('select[name="to_station_id"]').value;
+      
+      if (fromStation && toStation && fromStation === toStation) {
+        e.preventDefault();
+        alert('Source and destination stations cannot be the same!');
+        return false;
+      }
+      
+      // Validate that at least one item is present
+      const itemNames = document.querySelectorAll('input[name="item_names[]"]');
+      let hasValidItem = false;
+      itemNames.forEach(input => {
+        if (input.value.trim()) {
+          hasValidItem = true;
+        }
+      });
+      
+      if (!hasValidItem) {
+        e.preventDefault();
+        alert('Please add at least one item to send.');
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>

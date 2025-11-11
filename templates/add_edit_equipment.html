@@ -1,0 +1,120 @@
+<!-- templates/add_edit_equipment.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">
+      {% if action == 'Edit' %}Update{% else %}Add{% endif %} {% if kind == 'computer' %}Computer{% else %}Printer{% endif %}
+    </h5>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      {% if kind == 'computer' %}
+        <div class="mb-3">
+          <label class="form-label">Computer Name</label>
+          <input name="computer_name" class="form-control" required value="{{ item['name'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Assigned User</label>
+          <input name="assigned_user" class="form-control" value="{{ item['assigned_user'] if item else '' }}">
+        </div>
+        
+        <!-- Add Status field for computers -->
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if item and item['status']=='active' %}selected{% endif %}>Active</option>
+            <option value="on-service" {% if item and item['status']=='on-service' %}selected{% endif %}>On-service</option>
+            <option value="backup" {% if item and item['status']=='backup' %}selected{% endif %}>Backup</option>
+          </select>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Year Purchased</label>
+            <input name="year_purchased" class="form-control" value="{{ item['year_purchased'] if item else '' }}">
+          </div>
+          <div class="col-md-8 mb-3">
+            <label class="form-label">Processor</label>
+            <input name="processor" class="form-control" value="{{ item['processor'] if item else '' }}">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Installed RAM</label>
+          <input name="installed_ram" class="form-control" value="{{ item['ram'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Device ID</label>
+          <input name="device_id" class="form-control" value="{{ item['device_id'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Product ID</label>
+          <input name="product_id" class="form-control" value="{{ item['product_id'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">System Type</label>
+          <input name="system_type" class="form-control" value="{{ item['system_type'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Pen & Touch</label>
+          <input name="pen_touch" class="form-control" value="{{ item['pen_touch'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Windows Installed</label>
+          <input name="windows" class="form-control" value="{{ item['windows'] if item else '' }}">
+        </div>
+
+        <!-- Notes field for computers -->
+        <div class="mb-3">
+          <label class="form-label">Notes</label>
+          <textarea name="notes" class="form-control">{{ item['notes'] if item else '' }}</textarea>
+        </div>
+
+        <!-- Last Serviced field -->
+        <div class="mb-3">
+          <label class="form-label">Last Serviced (YYYY-MM-DD)</label>
+          <input name="last_serviced" class="form-control" value="{{ item['last_serviced'] if item and item['last_serviced'] else '' }}">
+        </div>
+
+        <!-- Service History field -->
+        <div class="mb-3">
+          <label class="form-label">Service History</label>
+          <textarea name="history" class="form-control" rows="4">{{ item['history'] if item else '' }}</textarea>
+        </div>
+
+      {% else %}
+        <!-- Printer section remains the same -->
+        <div class="mb-3">
+          <label class="form-label">Printer Name</label>
+          <input name="printer_name" class="form-control" required value="{{ item['name'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Serial Number</label>
+          <input name="serial_number" class="form-control" value="{{ item['serial_number'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Year Purchased</label>
+          <input name="year_purchased" class="form-control" value="{{ item['year_purchased'] if item else '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="active" {% if item and item['status']=='active' %}selected{% endif %}>Active</option>
+            <option value="on-service" {% if item and item['status']=='on-service' %}selected{% endif %}>On-service</option>
+            <option value="backup" {% if item and item['status']=='backup' %}selected{% endif %}>Backup</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Notes</label>
+          <textarea name="notes" class="form-control">{{ item['notes'] if item else '' }}</textarea>
+        </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-success">
+        {% if action == 'Edit' %}Update{% else %}Add{% endif %}
+      </button>
+      <a href="{% if session.role == 'admin' %}{{ url_for('admin.view_station', station_id=item['station_id'] if item else station_id) }}{% else %}{{ url_for('user.user_dashboard') }}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

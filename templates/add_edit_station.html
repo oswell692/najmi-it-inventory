@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h5>{{ action }} Station</h5>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label">Station Name</label>
+        <input name="name" class="form-control" required value="{{ station.name if station else '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input name="location" class="form-control" value="{{ station.location if station else '' }}">
+      </div>
+      {% if action == 'Edit' %}
+      <button class="btn btn-success">Update</button>
+      {% else %}
+      <button class="btn btn-success">{{ action }}</button>
+      {% endif %}
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

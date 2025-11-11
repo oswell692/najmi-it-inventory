@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Send Items History - Najmi International</title>
+  <style>
+    .status-sent { border-left: 4px solid #ffc107; }
+    .status-received { border-left: 4px solid #198754; }
+    .history-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+    .date-overdue {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    .date-upcoming {
+      color: #fd7e14;
+      font-weight: bold;
+    }
+    .date-normal {
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center py-3">
+          <div>
+            <h2 class="mb-1 fw-bold text-dark">
+              <i class="bi bi-clock-history me-2"></i>Send Items History
+            </h2>
+            <p class="text-muted mb-0">Track all item transfers between stations</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('admin.send_items') }}" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-2"></i>New Send
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card history-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="card-title text-primary">{{ send_history|length }}</h4>
+                <p class="card-text text-muted mb-0">Total Transfers</p>
+              </div>
+              <div class="bg-primary bg-opacity-10 p-3 rounded">
+                <i class="bi bi-send text-primary" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card history-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="card-title text-warning">
+                  {{ send_history|selectattr('status', 'equalto', 'sent')|list|length }}
+                </h4>
+                <p class="card-text text-muted mb-0">In Transit</p>
+              </div>
+              <div class="bg-warning bg-opacity-10 p-3 rounded">
+                <i class="bi bi-truck text-warning" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card history-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="card-title text-success">
+                  {{ send_history|selectattr('status', 'equalto', 'received')|list|length }}
+                </h4>
+                <p class="card-text text-muted mb-0">Received</p>
+              </div>
+              <div class="bg-success bg-opacity-10 p-3 rounded">
+                <i class="bi bi-check-circle text-success" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card history-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="card-title text-info">
+                  {% set total_items = namespace(value=0) %}
+                  {% for send in send_history %}
+                    {% set total_items.value = total_items.value + send.item_count %}
+                  {% endfor %}
+                  {{ total_items.value }}
+                </h4>
+                <p class="card-text text-muted mb-0">Total Items</p>
+              </div>
+              <div class="bg-info bg-opacity-10 p-3 rounded">
+                <i class="bi bi-box-seam text-info" style="font-size: 1.5rem;"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card history-card">
+          <div class="card-body py-3">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Filter by Status</label>
+                <select class="form-select form-select-sm" id="statusFilter">
+                  <option value="all">All Status</option>
+                  <option value="sent">In Transit</option>
+                  <option value="received">Received</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Filter by Station</label>
+                <select class="form-select form-select-sm" id="stationFilter">
+                  <option value="all">All Stations</option>
+                  {% for station in stations %}
+                  <option value="{{ station.name }}">{{ station.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Search</label>
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search by item, person, ID...">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label small text-muted mb-1">&nbsp;</label>
+                <button class="btn btn-outline-secondary btn-sm w-100" onclick="clearFilters()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Send History Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card history-card">
+          <div class="card-body">
+            {% if send_history %}
+            <div class="table-responsive">
+              <table class="table table-hover" id="historyTable">
+                <thead>
+                  <tr>
+                    <th>Transfer Info</th>
+                    <th>Items</th>
+                    <th>Persons</th>
+                    <th>Delivery Dates</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for send in send_history %}
+                  <tr class="history-row {% if send.status == 'sent' %}status-sent{% else %}status-received{% endif %}" 
+                      data-status="{{ send.status }}"
+                      data-from-station="{{ send.from_station_name }}"
+                      data-to-station="{{ send.to_station_name }}"
+                      data-search="{{ send.id }} {{ send.sent_by }} {{ send.received_by or '' }} {{ send.from_station_name }} {{ send.to_station_name }}">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                          {% if send.status == 'sent' %}
+                          <i class="bi bi-truck text-warning me-2"></i>
+                          {% else %}
+                          <i class="bi bi-check-circle text-success me-2"></i>
+                          {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                          <strong class="d-block">{{ send.from_station_name }}</strong>
+                          <i class="bi bi-arrow-right text-muted small mx-1"></i>
+                          <strong class="d-block">{{ send.to_station_name }}</strong>
+                          <small class="text-muted">ID: #{{ send.id }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-primary">{{ send.item_count }} items</span>
+                      <br>
+                      <small class="text-muted">Sent: {{ send.send_date.strftime('%b %d, %Y') }}</small>
+                    </td>
+                    <td>
+                      <small>
+                        <strong class="d-block">Sent by:</strong>
+                        {{ send.sent_by }}
+                        {% if send.received_by %}
+                        <br>
+                        <strong class="d-block mt-1">Received by:</strong>
+                        {{ send.received_by }}
+                        {% endif %}
+                      </small>
+                    </td>
+                    <td>
+                      <small>
+                        {% if send.expected_delivery_date %}
+                          {# Safe date comparison #}
+                          {% set today_date = now.date() %}
+                          {% set expected_date = send.expected_delivery_date %}
+                          {% set date_class = "date-normal" %}
+                          
+                          {% if send.status == 'sent' and expected_date %}
+                            {% if expected_date < today_date %}
+                              {% set date_class = "date-overdue" %}
+                            {% elif expected_date == today_date %}
+                              {% set date_class = "date-upcoming" %}
+                            {% endif %}
+                          {% endif %}
+                          
+                          <span class="{{ date_class }}">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            Expected: {{ expected_date.strftime('%b %d, %Y') }}
+                          </span>
+                          <br>
+                        {% endif %}
+                        
+                        {% if send.received_date %}
+                          <span class="text-success">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Received: {{ send.received_date.strftime('%b %d, %Y') }}
+                          </span>
+                        {% else %}
+                          <span class="text-muted">
+                            <i class="bi bi-calendar-x me-1"></i>
+                            Not received yet
+                          </span>
+                        {% endif %}
+                      </small>
+                    </td>
+                    <td>
+                      {% if send.status == 'sent' %}
+                      <span class="badge bg-warning">
+                        <i class="bi bi-truck me-1"></i>In Transit
+                      </span>
+                      {% if send.expected_delivery_date and send.expected_delivery_date < now.date() %}
+                      <br>
+                      <small class="date-overdue mt-1 d-block">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                      </small>
+                      {% endif %}
+                      {% else %}
+                      <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Received
+                      </span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <a href="{{ url_for('admin.send_items_details', send_id=send.id) }}" 
+                           class="btn btn-outline-primary" title="View Details">
+                          <i class="bi bi-eye"></i>
+                        </a>
+                        {% if send.status == 'sent' %}
+                        <button type="button" class="btn btn-outline-success" 
+                                onclick="markAsReceived({{ send.id }})"
+                                title="Mark Received">
+                          <i class="bi bi-check-lg"></i>
+                        </button>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Results Count -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <small class="text-muted" id="resultsCount">
+                Showing {{ send_history|length }} of {{ send_history|length }} records
+              </small>
+              <div>
+                <small class="text-muted me-3">
+                  <i class="bi bi-circle-fill text-warning me-1"></i>In Transit
+                </small>
+                <small class="text-muted">
+                  <i class="bi bi-circle-fill text-success me-1"></i>Received
+                </small>
+              </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-send display-1 text-muted"></i>
+              <h5 class="mt-3 text-muted">No Send Records</h5>
+              <p class="text-muted mb-4">No item transfers have been recorded yet</p>
+              <a href="{{ url_for('admin.send_items') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Create First Send
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark as Received Modal -->
+  <div class="modal fade" id="receiveModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Mark Items as Received</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="receiveForm" method="POST">
+          <div class="modal-body">
+            <p>Are you sure you want to mark these items as received?</p>
+            
+            <div class="mb-3">
+              <label for="receivedBy" class="form-label">Received By</label>
+              <input type="text" class="form-control" id="receivedBy" name="received_by" 
+                     placeholder="Enter name of person receiving items" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="receivedDate" class="form-label">Actual Received Date</label>
+              <input type="date" class="form-control" id="receivedDate" name="received_date" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="receiveNotes" class="form-label">Receiving Notes (Optional)</label>
+              <textarea class="form-control" id="receiveNotes" name="receive_notes" rows="3" 
+                        placeholder="Any notes about the receiving process..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Confirm Receipt</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentSendId = null;
+
+    function markAsReceived(sendId) {
+      currentSendId = sendId;
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('receivedDate').value = today;
+      document.getElementById('receiveForm').action = `/admin/mark_items_received/${sendId}`;
+      new bootstrap.Modal(document.getElementById('receiveModal')).show();
+    }
+
+    function filterTable() {
+      const statusFilter = document.getElementById('statusFilter').value;
+      const stationFilter = document.getElementById('stationFilter').value;
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      
+      const rows = document.querySelectorAll('#historyTable tbody .history-row');
+      let visibleCount = 0;
+      
+      rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const fromStation = row.getAttribute('data-from-station');
+        const toStation = row.getAttribute('data-to-station');
+        const searchData = row.getAttribute('data-search').toLowerCase();
+        
+        let showRow = true;
+        
+        // Status filter
+        if (statusFilter !== 'all' && status !== statusFilter) {
+          showRow = false;
+        }
+        
+        // Station filter
+        if (stationFilter !== 'all' && fromStation !== stationFilter && toStation !== stationFilter) {
+          showRow = false;
+        }
+        
+        // Search filter
+        if (searchTerm && !searchData.includes(searchTerm)) {
+          showRow = false;
+        }
+        
+        if (showRow) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      
+      document.getElementById('resultsCount').textContent = `Showing ${visibleCount} of ${rows.length} records`;
+    }
+
+    function clearFilters() {
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('stationFilter').value = 'all';
+      document.getElementById('searchInput').value = '';
+      filterTable();
+    }
+
+    // Initialize filters
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('statusFilter').addEventListener('change', filterTable);
+      document.getElementById('stationFilter').addEventListener('change', filterTable);
+      document.getElementById('searchInput').addEventListener('input', filterTable);
+      
+      // Set today's date as default for received date
+      const today = new Date().toISOString().split('T')[0];
+      const receivedDateField = document.getElementById('receivedDate');
+      if (receivedDateField && !receivedDateField.value) {
+        receivedDateField.value = today;
+      }
+    });
+  </script>
+</body>
+</html>

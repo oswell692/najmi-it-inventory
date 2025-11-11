@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Add Back to Dashboard button -->
+    <div class="mb-3">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <h3>{{ computer.name }} - Specifications</h3>
+    <p><strong>Assigned User:</strong> {{ computer.assigned_user or 'Not assigned' }}</p>
+    <p><strong>Status:</strong> 
+        {% if computer.status == 'active' %}
+            <span class="badge bg-success">Active</span>
+        {% elif computer.status == 'on-service' %}
+            <span class="badge bg-warning">On Service</span>
+        {% elif computer.status == 'backup' %}
+            <span class="badge bg-info">Backup</span>
+        {% else %}
+            <span class="badge bg-secondary">{{ computer.status }}</span>
+        {% endif %}
+    </p>
+    <p><strong>Station:</strong> 
+        {% if computer.station_name %}
+            {{ computer.station_name }}
+        {% else %}
+            Station {{ computer.station_id }}
+        {% endif %}
+    </p>
+
+    <table class="table table-bordered mt-3">
+        <tbody>
+            <tr><th>Year Purchased</th><td>{{ computer.year_purchased }}</td></tr>
+            <tr><th>Processor</th><td>{{ computer.processor }}</td></tr>
+            <tr><th>Installed RAM</th><td>{{ computer.ram }}</td></tr>
+            <tr><th>Device ID</th><td>{{ computer.device_id }}</td></tr>
+            <tr><th>Product ID</th><td>{{ computer.product_id }}</td></tr>
+            <tr><th>System Type</th><td>{{ computer.system_type }}</td></tr>
+            <tr><th>Pen & Touch</th><td>{{ computer.pen_touch }}</td></tr>
+            <tr><th>Windows Installed</th><td>{{ computer.windows }}</td></tr>
+            <tr><th>Last Serviced</th><td>{{ computer.last_serviced or 'Never' }}</td></tr>
+            <tr><th>History</th><td>{{ computer.history or 'No history' }}</td></tr>
+            <tr><th>Notes</th><td>{{ computer.notes or 'No notes' }}</td></tr>
+        </tbody>
+    </table>
+
+    <div class="mt-3">
+        <a href="{{ url_for('admin.edit_computer', equipment_id=computer.id) }}" class="btn btn-warning">Edit</a>
+        <form action="{{ url_for('admin.delete_equipment', equipment_id=computer.id) }}" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+{% endblock %}

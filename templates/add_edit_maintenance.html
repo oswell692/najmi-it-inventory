@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>{{ action }} Maintenance Record - Najmi International</title>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white py-3">
+            <h4 class="card-title mb-0">
+              <i class="bi bi-tools me-2"></i>{{ action }} Maintenance Record
+            </h4>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Device Type *</label>
+                  <select class="form-select" name="device_type" required id="deviceType">
+                    <option value="">Select Device Type</option>
+                    <option value="computer" {% if record and record.device_type == 'computer' %}selected{% endif %}>Computer</option>
+                    <option value="printer" {% if record and record.device_type == 'printer' %}selected{% endif %}>Printer</option>
+                  </select>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Station *</label>
+                  <select class="form-select" name="station_id" required id="stationSelect">
+                    <option value="">Select Station</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}" {% if record and record.station_id == station.id %}selected{% endif %}>
+                      {{ station.name }} - {{ station.location }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Device *</label>
+                <select class="form-select" name="device_id" required id="deviceSelect">
+                  <option value="">Select a device first</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Issue Description *</label>
+                <textarea class="form-control" name="issue_description" rows="4" 
+                          placeholder="Describe the issue in detail..." required>{% if record %}{{ record.issue_description }}{% endif %}</textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Technician *</label>
+                  <input type="text" class="form-control" name="technician" 
+                         value="{% if record %}{{ record.technician }}{% endif %}" 
+                         placeholder="Enter technician name" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Status *</label>
+                  <select class="form-select" name="status" required>
+                    <option value="pending" {% if record and record.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="in_progress" {% if record and record.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if record and record.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Date Reported *</label>
+                  <input type="date" class="form-control" name="date_reported" 
+                         value="{% if record %}{{ record.date_reported.strftime('%Y-%m-%d') }}{% else %}{{ today }}{% endif %}" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Date Resolved</label>
+                  <input type="date" class="form-control" name="date_resolved" 
+                         value="{% if record and record.date_resolved %}{{ record.date_resolved.strftime('%Y-%m-%d') }}{% endif %}">
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-check-circle me-2"></i>{{ action }} Record
+                </button>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-left me-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const computers = {{ computers|tojson }};
+    const printers = {{ printers|tojson }};
+    const currentRecord = {{ record|tojson|default('{}') }};
+
+    // Debug: Check what data we're receiving - show ALL properties
+    console.log('=== DEBUG INFO ===');
+    console.log('Computers:', computers);
+    if (computers.length > 0) {
+        console.log('First computer properties:', Object.keys(computers[0]));
+        console.log('First computer full data:', computers[0]);
+    }
+    console.log('Printers:', printers);
+    if (printers.length > 0) {
+        console.log('First printer properties:', Object.keys(printers[0]));
+        console.log('First printer full data:', printers[0]);
+    }
+    console.log('Current Record:', currentRecord);
+
+    // Function to filter devices by station
+    function filterDevicesByStation(stationId, deviceType) {
+        const deviceSelect = document.getElementById('deviceSelect');
+        deviceSelect.innerHTML = '<option value="">Select a device</option>';
+        
+        const devices = deviceType === 'computer' ? computers : printers;
+        
+        console.log('=== FILTERING DEBUG ===');
+        console.log('Device type:', deviceType);
+        console.log('Station ID to filter:', stationId);
+        console.log('All devices available:', devices);
+        
+        // Try different possible property names for station_id
+        const filteredDevices = devices.filter(device => {
+            // Check all possible station ID property names
+            const possibleStationProps = ['station_id', 'stationid', 'station', 'stationId'];
+            let deviceStationId = null;
+            
+            for (const prop of possibleStationProps) {
+                if (device[prop] !== undefined) {
+                    deviceStationId = device[prop];
+                    console.log(`Found station ID in property '${prop}':`, deviceStationId);
+                    break;
+                }
+            }
+            
+            if (deviceStationId === null) {
+                console.log('No station ID found in device:', device);
+                return false;
+            }
+            
+            // Convert both to numbers for comparison
+            const deviceStationNum = parseInt(deviceStationId);
+            const selectedStationNum = parseInt(stationId);
+            
+            console.log(`Comparing: device station ${deviceStationNum} with selected ${selectedStationNum}`);
+            return deviceStationNum === selectedStationNum;
+        });
+        
+        console.log('Filtered devices result:', filteredDevices);
+
+        filteredDevices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.id;
+            option.textContent = device.name || device.device_name || 'Unnamed Device';
+            if (currentRecord && currentRecord.device_id == device.id && currentRecord.device_type == deviceType) {
+                option.selected = true;
+            }
+            deviceSelect.appendChild(option);
+        });
+
+        // If no devices found for this station
+        if (filteredDevices.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No devices found in this station";
+            option.disabled = true;
+            deviceSelect.appendChild(option);
+        }
+    }
+
+    // When device type changes
+    document.getElementById('deviceType').addEventListener('change', function() {
+        const stationSelect = document.getElementById('stationSelect');
+        const stationId = stationSelect.value;
+        
+        if (stationId) {
+            filterDevicesByStation(stationId, this.value);
+        } else {
+            const deviceSelect = document.getElementById('deviceSelect');
+            deviceSelect.innerHTML = '<option value="">Select a station first</option>';
+        }
+    });
+
+    // When station changes
+    document.getElementById('stationSelect').addEventListener('change', function() {
+        const deviceType = document.getElementById('deviceType').value;
+        const stationId = this.value;
+        
+        if (deviceType && stationId) {
+            filterDevicesByStation(stationId, deviceType);
+        } else if (!deviceType) {
+            const deviceSelect = document.getElementById('deviceSelect');
+            deviceSelect.innerHTML = '<option value="">Select device type first</option>';
+        }
+    });
+
+    // Trigger on page load if editing
+    if (currentRecord && currentRecord.device_type && currentRecord.station_id) {
+        document.getElementById('deviceType').dispatchEvent(new Event('change'));
+    }
+</script>
+</body>
+</html>

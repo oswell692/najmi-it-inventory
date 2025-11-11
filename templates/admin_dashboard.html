@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Najmi International - IT Inventory</title>
+  <style>
+    :root {
+      --najmi-primary: #1a365d;
+      --najmi-secondary: #2d74da;
+      --najmi-accent: #e53e3e;
+      --najmi-success: #38a169;
+      --najmi-warning: #dd6b20;
+    }
+    
+    .sidebar {
+      background: linear-gradient(180deg, var(--najmi-primary) 0%, #2d3748 100%);
+      color: white;
+      height: 100vh;
+      position: fixed;
+      width: 260px;
+      box-shadow: 3px 0 15px rgba(0,0,0,0.1);
+    }
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 12px 20px;
+      margin: 2px 0;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+      color: white;
+      background: rgba(45, 116, 218, 0.2);
+      transform: translateX(5px);
+      border-left: 3px solid var(--najmi-secondary);
+    }
+    .main-content {
+      margin-left: 260px;
+      padding: 0;
+      background-color: #f7fafc;
+      min-height: 100vh;
+    }
+    .stat-card {
+      border-radius: 12px;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+      border-left: 4px solid transparent;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+    }
+    .stat-card.computers { border-left-color: #4299e1; }
+    .stat-card.network { border-left-color: #48bb78; }
+    .stat-card.maintenance { border-left-color: #ed8936; }
+    .stat-card.software { border-left-color: #9f7aea; }
+    
+    .station-card {
+      border-radius: 12px;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      background: white;
+    }
+    .station-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      transform: translateY(-3px);
+    }
+    .logo-container {
+      padding: 25px 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.1);
+    }
+    .brand-text {
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+    .btn-najmi-primary {
+      background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
+      border: none;
+      color: white;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .btn-najmi-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(45, 116, 218, 0.4);
+      color: white;
+    }
+    .top-navbar {
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 15px 30px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .content-area {
+      padding: 30px;
+    }
+    .quick-actions .btn {
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .quick-actions .btn:hover {
+      transform: translateY(-2px);
+    }
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    .status-active { background: var(--najmi-success); }
+    .status-maintenance { background: var(--najmi-warning); }
+    .status-offline { background: #a0aec0; }
+    .device-type-badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+    }
+    /* Redesigned station action buttons */
+.station-actions {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.station-btn {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+    border-radius: 6px !important;
+    min-width: auto;
+    flex: 1;
+    text-align: center;
+}
+
+.station-btn i {
+    font-size: 0.7rem;
+    margin-right: 2px;
+}
+
+.btn-group-compact {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-group-compact .btn {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-3 col-lg-2 sidebar d-md-block">
+        <div class="logo-container">
+          <div class="brand-logo mb-3">
+            <div style="color: white; font-size: 2rem; font-weight: bold; line-height: 1.2;">
+              Najmi<br>
+              <span style="font-size: 0.9rem; font-weight: 400; letter-spacing: 2px;">INTERNATIONAL</span>
+            </div>
+          </div>
+          <div class="brand-text">IT Inventory System</div>
+        </div>
+        
+        <nav class="nav flex-column mt-4">
+          <a class="nav-link active" href="{{ url_for('admin.admin_dashboard') }}">
+            <i class="bi bi-speedometer2 me-3"></i>Dashboard
+          </a>
+          <!-- ADD THIS LINE for Computers -->
+          <a class="nav-link" href="{{ url_for('admin.view_computers') }}">
+            <i class="bi bi-laptop me-3"></i>Computers
+          </a>
+          <a class="nav-link" href="{{ url_for('admin.view_printers') }}">
+            <i class="bi bi-printer me-3"></i>Printers
+          </a>
+          <!-- ADDED: Maintenance link -->
+          <a class="nav-link" href="{{ url_for('admin.maintenance_records') }}">
+            <i class="bi bi-tools me-3"></i>Maintenance
+          </a>
+          <!-- ADDED: Transfers link -->
+          <a class="nav-link" href="{{ url_for('admin.transfer_history') }}">
+            <i class="bi bi-arrow-left-right me-3"></i>Transfers
+          </a>
+          <a class="nav-link" href="{{ url_for('admin.send_items_history') }}">
+            <i class="bi bi-send me-3"></i>Sent Items
+          </a>
+        </nav>
+        
+        <div class="mt-auto p-3 position-absolute bottom-0 w-100 border-top border-secondary">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1">
+              <small class="text-light opacity-75 d-block">Logged in as</small>
+              <div class="text-white fw-semibold">{{ session.username }}</div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm" title="Logout">
+              <i class="bi bi-box-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-9 col-lg-10 main-content">
+        <!-- Top Navigation -->
+        <div class="top-navbar">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="mb-0 fw-bold text-dark">IT Inventory Dashboard</h4>
+              <p class="text-muted mb-0">Welcome back, {{ session.username }}</p>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <div class="dropdown">
+                <button class="btn btn-light border" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-bell text-muted"></i>
+                  {% if stations|length > 0 %}
+                  <span class="badge bg-primary position-absolute top-0 start-100 translate-middle">{{ stations|length }}</span>
+                  {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}">
+                    <i class="bi bi-pc-display me-2"></i>{{ stations|length }} Stations Active
+                  </a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('admin.view_printers') }}">
+                    <i class="bi bi-printer me-2"></i>View Printers
+                  </a></li>
+                  <!-- ADDED: Maintenance in dropdown -->
+                  <li><a class="dropdown-item" href="{{ url_for('admin.maintenance_records') }}">
+                    <i class="bi bi-tools me-2"></i>Maintenance Records
+                  </a></li>
+                  <!-- ADDED: Transfers in dropdown -->
+                  <li><a class="dropdown-item" href="{{ url_for('admin.transfer_history') }}">
+                    <i class="bi bi-arrow-left-right me-2"></i>Transfer History
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+          <!-- Quick Actions -->
+          <div class="row mb-4 quick-actions">
+            <div class="col-12">
+              <div class="d-flex gap-3 flex-wrap">
+                <a class="btn btn-najmi-primary" href="{{ url_for('admin.add_station') }}">
+                  <i class="bi bi-plus-circle me-2"></i>Add New Station
+                </a>
+                <a class="btn btn-outline-primary" href="{{ url_for('admin.send_items') }}">
+                  <i class="bi bi-printer me-2"></i>Send Items
+                </a>
+                
+                <!-- ADDED: Transfer Equipment button -->
+                <a class="btn btn-outline-info" href="{{ url_for('admin.transfer_equipment') }}">
+                  <i class="bi bi-arrow-left-right me-2"></i>Transfer Equipment
+                </a>
+               
+                <!-- ADDED: Add Maintenance action button -->
+                <a class="btn btn-outline-warning" href="{{ url_for('admin.add_maintenance') }}">
+                  <i class="bi bi-tools me-2"></i>Add Maintenance
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Overview -->
+          <div class="row mb-5">
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card stat-card computers h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h2 class="card-title text-primary">{{ stations|length }}</h2>
+                      <p class="card-text text-muted">IT Stations</p>
+                      <small class="text-success">
+                        <i class="bi bi-check-circle me-1"></i>All Active
+                      </small>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                      <i class="bi bi-pc-display-horizontal text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card stat-card network h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+    <h2 class="card-title text-success">{{ total_devices }}</h2>
+    <p class="card-text text-muted">Total Devices</p>
+    <small class="text-success">
+        <i class="bi bi-check-circle me-1"></i>{{ computers_count }} computers, {{ printers_count }} printers
+    </small>
+</div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                      <i class="bi bi-wifi text-success" style="font-size: 2rem;"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card stat-card maintenance h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h2 class="card-title text-warning">0</h2>
+                      <p class="card-text text-muted">System Status</p>
+                      <small class="text-success">
+                        <i class="bi bi-check-circle me-1"></i>All Systems Operational
+                      </small>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                      <i class="bi bi-activity text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card stat-card software h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h2 class="card-title text-info">100%</h2>
+                      <p class="card-text text-muted">Inventory Coverage</p>
+                      <small class="text-success">
+                        <i class="bi bi-check-circle me-1"></i>Complete
+                      </small>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                      <i class="bi bi-clipboard-check text-info" style="font-size: 2rem;"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Stations -->
+          <div class="row">
+            <!-- Stations Grid -->
+            <div class="col-12">
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                  <h5 class="card-title mb-0 text-dark">
+                    <i class="bi bi-pc-display me-2 text-primary"></i>IT Stations ({{ stations|length }})
+                  </h5>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.add_station') }}">
+                    <i class="bi bi-plus-circle me-1"></i>Add Station
+                  </a>
+                </div>
+                <div class="card-body">
+                  {% if stations %}
+                  <div class="row">
+                    {% for s in stations %}
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                      <div class="card station-card h-100">
+                        <div class="card-body">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title text-dark mb-0">{{ s.name }}</h6>
+                            <span class="badge bg-success">
+                              <span class="status-indicator status-active"></span>Active
+                            </span>
+                          </div>
+                          <p class="card-text text-muted small mb-3">
+                            <i class="bi bi-geo-alt me-1 text-primary"></i>{{ s.location }}
+                          </p>
+                          <div class="d-flex justify-content-between align-items-center text-muted small">
+                            <span>
+                              <i class="bi bi-calendar me-1"></i>ID: {{ s.id }}
+                            </span>
+                            <span>
+                              <i class="bi bi-laptop me-1"></i>Ready for devices
+                            </span>
+                          </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top pt-2 pb-2">
+    <div class="btn-group-compact mb-2">
+        <a href="{{ url_for('admin.view_station', station_id=s.id) }}" class="btn btn-outline-primary station-btn" title="Open Station">
+          <i class="bi bi-folder2-open"></i> Open
+        </a>
+        <a href="{{ url_for('admin.edit_station', station_id=s.id) }}" class="btn btn-outline-warning station-btn" title="Edit Station">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        
+    </div>
+    <form action="{{ url_for('admin.delete_station', station_id=s.id) }}" method="POST">
+        <button type="submit" class="btn btn-outline-danger station-btn w-100" onclick="return confirm('Delete {{ s.name }}?')">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+    </form>
+</div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="text-center py-5">
+                    <i class="bi bi-inboxes display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No IT Stations Found</h5>
+                    <p class="text-muted mb-4">Get started by adding your first station to organize your IT equipment</p>
+                    <a class="btn btn-najmi-primary btn-lg" href="{{ url_for('admin.add_station') }}">
+                      <i class="bi bi-plus-circle me-2"></i>Add First Station
+                    </a>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ station.name if station else "Station Dashboard" }} - Dashboard</h2>
+    <p class="text-muted">{{ station.location if station else "" }}</p>
+
+    <p class="text-end">
+    {% if session.role == 'admin' %}
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">←Dashboard</a>
+    {% endif %}
+</p>
+
+
+    <!-- Tabs for Computers & Printers -->
+    <ul class="nav nav-tabs" id="stationTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="computers-tab" data-bs-toggle="tab" data-bs-target="#computers" type="button" role="tab">
+                Computers ({{ computers|length if computers else 0 }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="printers-tab" data-bs-toggle="tab" data-bs-target="#printers" type="button" role="tab">
+                Printers ({{ printers|length if printers else 0 }})
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- COMPUTERS TAB -->
+        <div class="tab-pane fade show active" id="computers" role="tabpanel">
+            <div class="d-flex justify-content-between mb-2">
+                <h5>All Computers</h5>
+                {% if station %}
+                    {% if session.role == 'user' %}
+                        <a href="{{ url_for('user.add_computer', station_id=station['id']) }}" class="btn btn-primary btn-sm">+ Add Computer</a>
+                    {% elif session.role == 'admin' %}
+                        <a href="{{ url_for('admin.add_computer', station_id=station['id']) }}" class="btn btn-primary btn-sm">+ Add Computer</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Computer Name</th>
+                        <th>Assigned User</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in computers %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ comp.name }}</td>
+                        <td>{{ comp.assigned_user }}</td>
+                        <td>
+                            {% if session.role == 'user' %}
+                                <a href="{{ url_for('user.view_computer', equipment_id=comp.id) }}" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a href="{{ url_for('user.edit_computer', equipment_id=comp.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form action="{{ url_for('user.delete_equipment', equipment_id=comp.id) }}" method="POST" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            {% elif session.role == 'admin' %}
+                                <a href="{{ url_for('admin.view_computer', equipment_id=comp.id) }}" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a href="{{ url_for('admin.edit_computer', equipment_id=comp.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form action="{{ url_for('admin.delete_equipment', equipment_id=comp.id) }}" method="POST" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PRINTERS TAB -->
+        <div class="tab-pane fade" id="printers" role="tabpanel">
+            <div class="d-flex justify-content-between mb-2">
+                <h5>All Printers</h5>
+                {% if station %}
+                    {% if session.role == 'user' %}
+                        <a href="{{ url_for('user.add_printer', station_id=station['id']) }}" class="btn btn-primary btn-sm">+ Add Printer</a>
+                    {% elif session.role == 'admin' %}
+                        <a href="{{ url_for('admin.add_printer', station_id=station['id']) }}" class="btn btn-primary btn-sm">+ Add Printer</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Printer Name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for printer in printers %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ printer.name }}</td>
+                        <td>{{ printer.status }}</td>
+                        <td>
+                            {% if session.role == 'user' %}
+                                <a href="{{ url_for('user.view_printer', equipment_id=printer.id) }}" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a href="{{ url_for('user.edit_printer', equipment_id=printer.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form action="{{ url_for('user.delete_equipment', equipment_id=printer.id) }}" method="POST" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            {% elif session.role == 'admin' %}
+                                <a href="{{ url_for('admin.view_printer', equipment_id=printer.id) }}" class="btn btn-sm btn-outline-secondary">Open</a>
+                                <a href="{{ url_for('admin.edit_printer', equipment_id=printer.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form action="{{ url_for('admin.delete_equipment', equipment_id=printer.id) }}" method="POST" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    var triggerTabList = [].slice.call(document.querySelectorAll('#stationTabs button'))
+    triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl)
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    })
+</script>
+{% endblock %}

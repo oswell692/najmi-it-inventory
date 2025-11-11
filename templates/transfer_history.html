@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Transfer History - Najmi International</title>
+  <style>
+    .search-card {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+    .highlight {
+      background-color: #fff3cd !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center py-3">
+          <div>
+            <h2 class="mb-1 fw-bold text-dark">
+              <i class="bi bi-clock-history me-2"></i>Transfer History
+            </h2>
+            <p class="text-muted mb-0">All equipment transfer records</p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('admin.transfer_equipment') }}" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-2"></i>New Transfer
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card search-card">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-search me-2"></i>Search & Filter Transfers
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Search Equipment</label>
+                <input type="text" class="form-control" id="searchEquipment" 
+                       placeholder="Computer, printer name...">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" id="fromDate">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" id="toDate">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Station</label>
+                <select class="form-select" id="stationFilter">
+                  <option value="">All Stations</option>
+                  <option value="from">From Station Only</option>
+                  <option value="to">To Station Only</option>
+                  <option value="both">Both Stations</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Equipment Type</label>
+                <select class="form-select" id="typeFilter">
+                  <option value="">All Types</option>
+                  <option value="computer">Computers</option>
+                  <option value="printer">Printers</option>
+                  <option value="monitor">Monitors</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <button class="btn btn-primary me-2" id="applyFilters">
+                  <i class="bi bi-funnel me-1"></i>Apply Filters
+                </button>
+                <button class="btn btn-outline-secondary" id="clearFilters">
+                  <i class="bi bi-x-circle me-1"></i>Clear All
+                </button>
+                <span class="text-muted ms-3" id="resultCount">
+                  Showing {{ transfers|length }} records
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transfer History Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            {% if transfers %}
+            <div class="table-responsive">
+              <table class="table table-hover" id="transfersTable">
+                <thead>
+                  <tr>
+                    <th>Equipment</th>
+                    <th>From → To</th>
+                    <th>Transfer Date</th>
+                    <th>Reason</th>
+                    <th>Additional Notes</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for transfer in transfers %}
+                  <tr class="transfer-row" 
+                      data-equipment="{{ transfer.equipment_name.lower() }}"
+                      data-date="{{ transfer.transfer_date.strftime('%Y-%m-%d') }}"
+                      data-from-station="{{ transfer.from_station_name.lower() }}"
+                      data-to-station="{{ transfer.to_station_name.lower() }}"
+                      data-type="{{ transfer.equipment_type }}">
+                    <td>
+                      <strong class="equipment-name">{{ transfer.equipment_name }}</strong>
+                      {% if transfer.serial_number %}
+                      <br><small class="text-muted">SN: {{ transfer.serial_number }}</small>
+                      {% endif %}
+                    </td>
+                    <td class="station-info">
+                      <span class="from-station">{{ transfer.from_station_name }}</span> 
+                      <i class="bi bi-arrow-right mx-2 text-primary"></i>
+                      <span class="to-station">{{ transfer.to_station_name }}</span>
+                    </td>
+                    <td class="transfer-date">{{ transfer.transfer_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                      <span class="d-inline-block text-truncate transfer-reason" style="max-width: 200px;">
+                        {{ transfer.transfer_reason }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if transfer.additional_notes %}
+                      <span class="d-inline-block text-truncate transfer-notes" style="max-width: 200px;" 
+                            title="{{ transfer.additional_notes }}">
+                        {{ transfer.additional_notes }}
+                      </span>
+                      {% else %}
+                      <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge equipment-type
+                        {% if transfer.equipment_type == 'computer' %}bg-primary
+                        {% elif transfer.equipment_type == 'printer' %}bg-success
+                        {% elif transfer.equipment_type == 'monitor' %}bg-info
+                        {% else %}bg-secondary{% endif %}">
+                        {{ transfer.equipment_type|title }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group">
+                        <a href="{{ url_for('admin.edit_transfer', transfer_id=transfer.id) }}" 
+                           class="btn btn-outline-warning btn-sm" title="Edit Transfer">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('admin.delete_transfer', transfer_id=transfer.id) }}" 
+                              method="POST" class="d-inline">
+                          <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                  onclick="return confirm('Delete this transfer record?')"
+                                  title="Delete Transfer">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-arrow-left-right display-1 text-muted"></i>
+              <h5 class="mt-3 text-muted">No Transfer Records</h5>
+              <p class="text-muted mb-4">No equipment transfers have been recorded yet</p>
+              <a href="{{ url_for('admin.transfer_equipment') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Create First Transfer
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchEquipment = document.getElementById('searchEquipment');
+      const fromDate = document.getElementById('fromDate');
+      const toDate = document.getElementById('toDate');
+      const stationFilter = document.getElementById('stationFilter');
+      const typeFilter = document.getElementById('typeFilter');
+      const applyFilters = document.getElementById('applyFilters');
+      const clearFilters = document.getElementById('clearFilters');
+      const resultCount = document.getElementById('resultCount');
+      const transferRows = document.querySelectorAll('.transfer-row');
+
+      function applySearchFilters() {
+        const searchTerm = searchEquipment.value.toLowerCase();
+        const fromDateValue = fromDate.value;
+        const toDateValue = toDate.value;
+        const stationValue = stationFilter.value;
+        const typeValue = typeFilter.value;
+
+        let visibleCount = 0;
+
+        transferRows.forEach(row => {
+          let showRow = true;
+
+          // Search equipment name
+          if (searchTerm && !row.dataset.equipment.includes(searchTerm)) {
+            showRow = false;
+          }
+
+          // Date range filter
+          const rowDate = row.dataset.date;
+          if (fromDateValue && rowDate < fromDateValue) {
+            showRow = false;
+          }
+          if (toDateValue && rowDate > toDateValue) {
+            showRow = false;
+          }
+
+          // Station filter
+          if (stationValue) {
+            const fromStation = row.dataset.fromStation;
+            const toStation = row.dataset.toStation;
+            
+            if (stationValue === 'from' && !searchTerm && !fromStation.includes(searchTerm)) {
+              showRow = false;
+            } else if (stationValue === 'to' && !searchTerm && !toStation.includes(searchTerm)) {
+              showRow = false;
+            } else if (stationValue === 'both' && !fromStation.includes(searchTerm) && !toStation.includes(searchTerm)) {
+              showRow = false;
+            }
+          }
+
+          // Type filter
+          if (typeValue && row.dataset.type !== typeValue) {
+            showRow = false;
+          }
+
+          // Show/hide row
+          if (showRow) {
+            row.style.display = '';
+            visibleCount++;
+            
+            // Highlight search term in equipment name
+            if (searchTerm) {
+              const equipmentName = row.querySelector('.equipment-name');
+              const originalText = equipmentName.textContent;
+              const regex = new RegExp(`(${searchTerm})`, 'gi');
+              equipmentName.innerHTML = originalText.replace(regex, '<mark class="highlight">$1</mark>');
+            }
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        resultCount.textContent = `Showing ${visibleCount} of {{ transfers|length }} records`;
+      }
+
+      function clearAllFilters() {
+        searchEquipment.value = '';
+        fromDate.value = '';
+        toDate.value = '';
+        stationFilter.value = '';
+        typeFilter.value = '';
+        
+        transferRows.forEach(row => {
+          row.style.display = '';
+          // Remove highlighting
+          const equipmentName = row.querySelector('.equipment-name');
+          equipmentName.innerHTML = equipmentName.textContent;
+        });
+        
+        resultCount.textContent = `Showing {{ transfers|length }} records`;
+      }
+
+      // Event listeners
+      applyFilters.addEventListener('click', applySearchFilters);
+      clearFilters.addEventListener('click', clearAllFilters);
+
+      // Real-time search on equipment name input
+      searchEquipment.addEventListener('input', applySearchFilters);
+      
+      // Real-time filter on type and station changes
+      typeFilter.addEventListener('change', applySearchFilters);
+      stationFilter.addEventListener('change', applySearchFilters);
+    });
+  </script>
+</body>
+</html>
