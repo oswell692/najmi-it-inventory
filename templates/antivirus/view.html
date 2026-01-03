@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-shield-alt"></i> Antivirus Details</h1>
+        <div>
+            <a href="{{ url_for('admin.antivirus_list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{{ antivirus.name }} - Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="40%">Name:</th>
+                            <td>{{ antivirus.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Version:</th>
+                            <td>{{ antivirus.version or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Vendor:</th>
+                            <td>{{ antivirus.vendor or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>License Type:</th>
+                            <td>{{ antivirus.license_type or 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="40%">Activation Date:</th>
+                            <td>{{ antivirus.activation_date.strftime('%Y-%m-%d') if antivirus.activation_date else 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Expiry Date:</th>
+                            <td>
+                                {% if antivirus.expiry_date %}
+                                    {{ antivirus.expiry_date.strftime('%Y-%m-%d') }}
+                                    {% set days_left = (antivirus.expiry_date - today).days %}
+                                    {% if days_left <= 0 %}
+                                        <span class="badge bg-danger ms-2">Expired</span>
+                                    {% elif days_left <= 30 %}
+                                        <span class="badge bg-warning ms-2">Expiring in {{ days_left }} days</span>
+                                    {% else %}
+                                        <span class="badge bg-success ms-2">Active</span>
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Activation Key:</th>
+                            <td>{{ antivirus.activation_key or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                {% if antivirus.expiry_date and antivirus.expiry_date < today %}
+                                    <span class="badge bg-danger">Expired</span>
+                                {% elif antivirus.expiry_date and (antivirus.expiry_date - today).days <= 60 %}
+                                    <span class="badge bg-warning">Expiring Soon</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            {% if antivirus.notes %}
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Notes:</h6>
+                    <p class="text-muted">{{ antivirus.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Assigned Equipment Section -->
+            {% if assigned_equipment %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Assigned Equipment ({{ assigned_equipment|length }})</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Equipment Name</th>
+                                    <th>Assigned User</th>
+                                    <th>Installation Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipment in assigned_equipment %}
+                                <tr>
+                                    <td>{{ equipment.name }}</td>
+                                    <td>{{ equipment.assigned_user or 'N/A' }}</td>
+                                    <td>{{ equipment.installed_date.strftime('%Y-%m-%d') if equipment.installed_date else 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('admin.edit_antivirus', antivirus_id=antivirus.id) }}" 
+                           class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{{ url_for('admin.antivirus_list') }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-list"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

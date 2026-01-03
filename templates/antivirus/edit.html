@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Antivirus - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-edit"></i> Edit Antivirus</h1>
+        <div>
+            <a href="{{ url_for('admin.antivirus_list') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">Edit {{ antivirus.name }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.edit_antivirus', antivirus_id=antivirus.id) }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Antivirus Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ antivirus.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="version" class="form-label">Version</label>
+                            <input type="text" class="form-control" id="version" name="version" 
+                                   value="{{ antivirus.version or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="vendor" class="form-label">Vendor</label>
+                            <input type="text" class="form-control" id="vendor" name="vendor" 
+                                   value="{{ antivirus.vendor or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="license_type" class="form-label">License Type</label>
+                            <select class="form-control" id="license_type" name="license_type">
+                                <option value="">Select License Type</option>
+                                <option value="Annual" {% if antivirus.license_type == 'Annual' %}selected{% endif %}>Annual</option>
+                                <option value="Perpetual" {% if antivirus.license_type == 'Perpetual' %}selected{% endif %}>Perpetual</option>
+                                <option value="Subscription" {% if antivirus.license_type == 'Subscription' %}selected{% endif %}>Subscription</option>
+                                <option value="Trial" {% if antivirus.license_type == 'Trial' %}selected{% endif %}>Trial</option>
+                                <option value="Free" {% if antivirus.license_type == 'Free' %}selected{% endif %}>Free</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="activation_key" class="form-label">Activation Key</label>
+                            <input type="text" class="form-control" id="activation_key" name="activation_key" 
+                                   value="{{ antivirus.activation_key or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="activation_date" class="form-label">Activation Date</label>
+                            <input type="date" class="form-control" id="activation_date" name="activation_date" 
+                                   value="{{ antivirus.activation_date.strftime('%Y-%m-%d') if antivirus.activation_date else '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expiry_date" class="form-label">Expiry Date</label>
+                            <input type="date" class="form-control" id="expiry_date" name="expiry_date" 
+                                   value="{{ antivirus.expiry_date.strftime('%Y-%m-%d') if antivirus.expiry_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ antivirus.notes or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Update Antivirus
+                            </button>
+                            <a href="{{ url_for('admin.antivirus_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <a href="{{ url_for('admin.view_antivirus', antivirus_id=antivirus.id) }}" class="btn btn-info">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

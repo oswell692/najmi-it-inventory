@@ -1,44 +1,673 @@
-<!-- templates/base.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>IT Inventory System</title>
+  <title>{% block title %}IT Inventory System - Najmi International{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="description" content="IT Inventory Management System">
+  
+  <!-- Critical CSS inlined for fast loading -->
   <style>
-    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; font-size: 1rem; }
+    /* Minimal critical CSS */
+    :root {
+      --primary-blue: #1e3a8a;
+      --primary-light: #3b82f6;
+      --accent-blue: #0ea5e9;
+      --success-green: #10b981;
+      --warning-amber: #f59e0b;
+      --danger-red: #ef4444;
+      --dark-bg: #0f172a;
+      --card-bg: #ffffff;
+      --body-bg: #f8fafc;
+      --border-gray: #e2e8f0;
+      --text-dark: #1e293b;
+      --text-light: #64748b;
+    }
+    
+    body { 
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--body-bg);
+      color: var(--text-dark);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+    
+    .navbar {
+      background-color: var(--dark-bg);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 60px;
+    }
+    
+    .loading {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-top-color: var(--primary-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+  
+  <!-- Deferred resources -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" 
+        media="print" onload="this.media='all'">
+  <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"></noscript>
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" 
+        media="print" onload="this.media='all'">
+  <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+  
+  <!-- Main styles with professional animations -->
+  <style>
+    /* Professional Color Scheme */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Smooth page transitions */
+    .page-enter {
+      animation: slideInRight 0.4s ease-out;
+    }
+    
+    /* Elegant Animations */
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes pulseSoft {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    /* Navbar with subtle animation */
+    .navbar {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 0;
+    }
+    
+    .navbar .container {
+      padding: 0 24px;
+    }
+    
+    .navbar-brand {
+      font-weight: 600;
+      font-size: 16px;
+      color: white !important;
+      padding: 0;
+    }
+    
+    .navbar-brand:hover {
+      opacity: 0.9;
+    }
+    
+    .navbar-brand i {
+      animation: pulseSoft 3s infinite ease-in-out;
+      font-size: 18px;
+    }
+    
+    .nav-link {
+      color: rgba(255, 255, 255, 0.9) !important;
+      font-weight: 500;
+      padding: 6px 12px !important;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      font-size: 13px;
+    }
+    
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white !important;
+      transform: translateY(-1px);
+    }
+    
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: white !important;
+    }
+    
+    /* Main content with entrance animation */
+    .main-content {
+      padding: 24px 0;
+      min-height: calc(100vh - 60px);
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    .main-content .container {
+      max-width: 1400px;
+      padding: 0 24px;
+    }
+    
+    /* Professional Cards */
+    .card {
+      border: 1px solid var(--border-gray);
+      border-radius: 8px;
+      background: var(--card-bg);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 20px;
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+    
+    .card:hover {
+      box-shadow: var(--card-shadow-hover);
+      transform: translateY(-2px);
+      border-color: var(--primary-light);
+    }
+    
+    .card-header {
+      background: var(--primary-gradient);
+      color: white;
+      border-bottom: none;
+      padding: 16px 20px;
+      font-weight: 600;
+      position: relative;
+      overflow: hidden;
+      font-size: 14px;
+    }
+    
+    .card-header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shimmer 3s infinite;
+    }
+    
+    .card-body {
+      padding: 20px;
+    }
+    
+    /* ========== REFINED BUTTONS ========== */
+    .btn {
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      letter-spacing: 0.1px;
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    
+    .btn-lg {
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    
+    /* Primary Button */
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+    }
+    
+    /* Secondary Button */
+    .btn-outline-primary {
+      color: var(--primary-light);
+      border-color: var(--primary-light);
+      background: transparent;
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-light);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Success Button */
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+    }
+    
+    .btn-success:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    
+    /* Danger Button */
+    .btn-danger {
+      background: var(--danger-red);
+      color: white;
+      border: none;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    }
+    
+    /* Warning Button */
+    .btn-warning {
+      background: var(--warning-amber);
+      color: white;
+      border: none;
+    }
+    
+    .btn-warning:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
+    
+    /* Light Button (for back/dashboard) */
+    .btn-light {
+      background: var(--white);
+      color: var(--text-dark);
+      border-color: var(--border-gray);
+    }
+    
+    .btn-light:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    
+    /* Tables with hover animations */
+    .table {
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-size: 13px;
+    }
+    
+    .table th {
+      background: #f8fafc;
+      color: var(--text-dark);
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 2px solid var(--border-gray);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .table td {
+      padding: 12px 16px;
+      border-color: var(--border-gray);
+      transition: background-color 0.2s ease;
+    }
+    
+    .table-hover tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+    
+    /* Animated Badges */
+    .badge {
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 0.2px;
+    }
+    
+    .badge:hover {
+      transform: scale(1.05);
+    }
+    
+    .badge-primary {
+      background: var(--primary-gradient);
+    }
+    
+    /* Professional Alerts */
+    .alert {
+      border: none;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      animation: slideInUp 0.3s ease-out;
+      position: relative;
+      overflow: hidden;
+      border-left: 4px solid transparent;
+    }
+    
+    .alert-success {
+      background-color: #f0fdf4;
+      color: #166534;
+      border-left-color: var(--success-green);
+    }
+    
+    .alert-danger {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border-left-color: var(--danger-red);
+    }
+    
+    .alert-warning {
+      background-color: #fefce8;
+      color: #854d0e;
+      border-left-color: var(--warning-amber);
+    }
+    
+    .alert-info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border-left-color: var(--accent-blue);
+    }
+    
+    /* Page Header with underline animation */
+    .page-header {
+      margin-bottom: 24px;
+    }
+    
+    .page-header h2 {
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 20px;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    
+    .page-header h2::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--primary-light);
+      animation: growWidth 0.6s ease-out 0.2s forwards;
+    }
+    
+    @keyframes growWidth {
+      to { width: 40px; }
+    }
+    
+    /* Stat Cards with counter animation */
+    .stat-card {
+      padding: 20px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: var(--card-shadow);
+      transition: all 0.2s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-top: 4px solid var(--primary-light);
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow-hover);
+    }
+    
+    .stat-card .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary-light);
+      line-height: 1;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    
+    .stat-card .stat-label {
+      color: var(--text-light);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Forms with focus animations */
+    .form-control,
+    .form-select {
+      border: 1px solid var(--border-gray);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Modal animations */
+    .modal.fade .modal-dialog {
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    }
+    
+    .modal.show .modal-dialog {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    /* Progress bars */
+    .progress {
+      border-radius: 6px;
+      height: 6px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      border-radius: 6px;
+      transition: width 0.6s ease-in-out;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+    
+    /* Dropdown menus */
+    .dropdown-menu {
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      padding: 6px;
+      font-size: 13px;
+    }
+    
+    .dropdown-item {
+      padding: 8px 12px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+      background: #f1f5f9;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 16px 0;
+      }
+      
+      .main-content .container {
+        padding: 0 16px;
+      }
+      
+      .navbar .container {
+        padding: 0 16px;
+      }
+      
+      .card {
+        margin-bottom: 16px;
+      }
+      
+      .card-header,
+      .card-body {
+        padding: 16px;
+      }
+    }
+    
+    /* Animation delays for staggered effects */
+    .animate-delay-1 { animation-delay: 0.1s; }
+    .animate-delay-2 { animation-delay: 0.2s; }
+    .animate-delay-3 { animation-delay: 0.3s; }
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">IT Inventory</a>
-    <div class="collapse navbar-collapse">
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('admin.admin_dashboard') }}">
+      <i class="fas fa-server me-2"></i>
+      IT Inventory System
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         {% if session.username %}
-        <li class="nav-item"><span class="nav-link">Signed in as {{ session.username }}</span></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 
+             data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle me-2"></i>
+            {{ session.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text small text-muted">Role: {{ session.role|title }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                <i class="fas fa-sign-out-alt me-2"></i>Logout
+              </a>
+            </li>
+          </ul>
+        </li>
         {% endif %}
       </ul>
     </div>
   </div>
 </nav>
 
-<div class="container my-4">
+<div class="container main-content">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, msg in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-          {{ msg }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="fas 
+              {% if category == 'success' %}fa-check-circle{% endif %}
+              {% if category == 'danger' %}fa-exclamation-circle{% endif %}
+              {% if category == 'warning' %}fa-exclamation-triangle{% endif %}
+              {% if category == 'info' %}fa-info-circle{% endif %}
+              me-2"></i>
+            <span>{{ msg }}</span>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       {% endfor %}
     {% endif %}
   {% endwith %}
+  
   {% block content %}{% endblock %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Deferred JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" defer></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Form submission loading states
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"], input[type="submit"]');
+        if (submitBtn && !submitBtn.hasAttribute('data-no-loading')) {
+          const originalHTML = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<span class="loading me-2"></span>Processing...';
+          submitBtn.disabled = true;
+          
+          setTimeout(() => {
+            if (submitBtn.disabled) {
+              submitBtn.innerHTML = originalHTML;
+              submitBtn.disabled = false;
+            }
+          }, 8000);
+        }
+      });
+    });
+    
+    // Initialize tooltips
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+      const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltips.map(el => new bootstrap.Tooltip(el));
+    }
+  });
+</script>
 </body>
 </html>

@@ -1,0 +1,1970 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Management - Najmi International{% endblock %}
+
+{% block content %}
+<style>
+    /* All your existing CSS remains exactly the same */
+    /* Remove page scroll, keep only table scroll */
+    body, html {
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .container-fluid {
+        height: calc(100vh - 70px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Make the table section take remaining space */
+    .card:last-child {
+        flex: 1;
+        min-height: 0;
+    }
+    
+    .card:last-child .card-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 0 !important;
+    }
+    
+    /* Main table container - takes most space but leaves room for footer */
+    .table-main-container {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Custom table container for sticky headers */
+    .table-container {
+        flex: 1;
+        overflow: auto;
+        position: relative;
+    }
+    
+    /* Make table header fixed with proper styling */
+    .stock-table {
+        margin-bottom: 0;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .stock-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 10;
+        border-bottom: 2px solid #dee2e6;
+        box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        padding: 12px 8px;
+        vertical-align: middle;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: #f8fafc !important;
+    }
+    
+    .stock-table tbody td {
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+    
+    /* Ensure thead has proper background when sticky */
+    .stock-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    /* Add notification styles to your existing CSS */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .status-in-stock { background: #10b981; }
+    .status-sent { background: #3b82f6; }
+    .status-used { background: #f59e0b; }
+    
+    .stock-quantity-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .stock-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: #f8fafc;
+    }
+    
+    .stock-actions .btn {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        margin-right: 4px;
+    }
+    
+    .card-stock {
+        border-left: 4px solid #ec4899;
+    }
+    
+    .card-toner {
+        border-left: 4px solid #8b5cf6;
+    }
+    
+    .btn-najmi-primary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .btn-najmi-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2);
+        color: white;
+    }
+    
+    /* STATIC NOTIFICATION DIALOG STYLES */
+    .notification-dialog {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        width: 480px; /* Slightly wider for more filters */
+        max-width: 90vw;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        z-index: 1050;
+        display: none;
+        border: 1px solid #e2e8f0;
+        max-height: 80vh; /* Slightly taller */
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .notification-dialog.show {
+        display: flex;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .notification-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-header h5 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* NEW: Advanced search filters container */
+    .notification-filters-container {
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    
+    .notification-filters-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .notification-filters-toggle h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.875rem;
+    }
+    
+    .notification-filters-toggle i {
+        color: #64748b;
+        transition: transform 0.3s ease;
+    }
+    
+    .notification-filters-toggle.active i {
+        transform: rotate(180deg);
+    }
+    
+    .notification-filters-content {
+        display: none;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .notification-filters-content.show {
+        display: grid;
+    }
+    
+    .notification-filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .notification-filter-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 2px;
+    }
+    
+    .notification-filter-select {
+        width: 100%;
+        padding: 0.375rem 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        background: white;
+        color: #334155;
+        cursor: pointer;
+    }
+    
+    .notification-filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    
+    .notification-filter-date {
+        width: 100%;
+        padding: 0.375rem 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        background: white;
+        color: #334155;
+    }
+    
+    .notification-filter-date:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    
+    .notification-filter-actions {
+        grid-column: span 2;
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .notification-filter-btn {
+        flex: 1;
+        padding: 0.375rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .notification-filter-apply {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .notification-filter-apply:hover {
+        background: #2563eb;
+    }
+    
+    .notification-filter-clear {
+        background: #e2e8f0;
+        color: #475569;
+    }
+    
+    .notification-filter-clear:hover {
+        background: #cbd5e1;
+    }
+    
+    /* Search bar styles */
+    .notification-search-container {
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    
+    .notification-search {
+        position: relative;
+        width: 100%;
+    }
+    
+    .notification-search-input {
+        width: 100%;
+        padding: 0.5rem 1rem 0.5rem 2.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: #334155;
+    }
+    
+    .notification-search-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .notification-search-input::placeholder {
+        color: #94a3b8;
+    }
+    
+    .notification-search-icon {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.875rem;
+    }
+    
+    .notification-clear-search {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+        display: none;
+    }
+    
+    .notification-clear-search:hover {
+        color: #64748b;
+    }
+    
+    .notification-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+        line-height: 1;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .notification-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .notification-body {
+        flex: 1;
+        overflow-y: auto;
+        max-height: calc(80vh - 280px); /* Adjusted for more filters */
+        padding: 0;
+    }
+    
+    .notification-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative; /* For click handling */
+    }
+    
+    .notification-item:hover {
+        background-color: #f8fafc;
+    }
+    
+    .notification-item.unread {
+        background-color: #f0f9ff;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    /* Hidden state for search filtering */
+    .notification-item.hidden {
+        display: none;
+    }
+    
+    /* Search results info */
+    .notification-search-info {
+        padding: 0.75rem 1.5rem;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: none;
+    }
+    
+    .notification-search-info.show {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-search-count {
+        font-weight: 600;
+        color: #3b82f6;
+    }
+    
+    .notification-clear-filters {
+        background: none;
+        border: none;
+        color: #3b82f6;
+        cursor: pointer;
+        font-size: 0.75rem;
+        text-decoration: underline;
+        padding: 0;
+    }
+    
+    .notification-clear-filters:hover {
+        color: #1d4ed8;
+    }
+    
+    /* Expanded state styles */
+    .notification-item.expanded {
+        background-color: #f8fafc;
+        padding: 1.5rem;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .notification-item.expanded .notification-full-details {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .notification-item.expanded .notification-preview {
+        display: none;
+    }
+    
+    .notification-item.expanded .notification-expand-icon {
+        transform: rotate(180deg);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .notification-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-time {
+        font-size: 0.75rem;
+        color: #64748b;
+        white-space: nowrap;
+        margin-left: 8px;
+    }
+    
+    .notification-preview {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 4px;
+        line-height: 1.4;
+        display: block;
+    }
+    
+    /* Full details section */
+    .notification-full-details {
+        display: none;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .notification-detail-item {
+        margin-bottom: 0.75rem;
+    }
+    
+    .notification-detail-label {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 2px;
+        font-size: 0.8rem;
+    }
+    
+    .notification-detail-value {
+        color: #475569;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    /* Expand icon */
+    .notification-expand-icon {
+        margin-left: 8px;
+        color: #94a3b8;
+        transition: transform 0.3s ease;
+        font-size: 0.8rem;
+    }
+    
+    .notification-user {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+    
+    .notification-empty {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: #64748b;
+    }
+    
+    .notification-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        background: #f8fafc;
+    }
+    
+    .mark-all-read {
+        color: #3b82f6;
+        cursor: pointer;
+        font-weight: 500;
+        background: none;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .mark-all-read:hover {
+        background-color: #eff6ff;
+    }
+    
+    .notification-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translate(50%, -50%);
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+    }
+    
+    .notification-bell {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    {% if unread_notifications_count > 0 %}
+    .notification-bell i {
+        animation: bellRing 1s ease infinite;
+    }
+    
+    @keyframes bellRing {
+        0%, 100% { transform: rotate(0); }
+        10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+        20%, 40%, 60%, 80% { transform: rotate(10deg); }
+    }
+    {% endif %}
+    
+    .notification-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    .notification-icon.sent { background-color: #dbeafe; color: #1d4ed8; }
+    .notification-icon.used { background-color: #fef3c7; color: #d97706; }
+    .notification-icon.added { background-color: #d1fae5; color: #059669; }
+    .notification-icon.updated { background-color: #f3e8ff; color: #7c3aed; }
+    .notification-icon.restocked { background-color: #ecfdf5; color: #10b981; }
+    .notification-icon.deleted { background-color: #fee2e2; color: #dc2626; }
+    .notification-icon.info { background-color: #eff6ff; color: #3b82f6; }
+    
+    /* Overlay for when dialog is open */
+    .notification-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 1049;
+        display: none;
+    }
+    
+    .notification-overlay.show {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .notification-dialog {
+            right: 10px;
+            left: 10px;
+            width: auto;
+            max-width: calc(100vw - 20px);
+        }
+        
+        .notification-filters-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .notification-filter-actions {
+            grid-column: span 1;
+        }
+    }
+</style>
+
+<!-- Notification Overlay -->
+<div class="notification-overlay" id="notificationOverlay"></div>
+
+<!-- Static Notification Dialog -->
+<div class="notification-dialog" id="notificationDialog">
+    <div class="notification-header">
+        <h5>
+            <i class="fas fa-bell"></i>
+            Notifications
+            {% if unread_notifications_count > 0 %}
+            <span class="badge bg-white text-primary ms-2">{{ unread_notifications_count }} new</span>
+            {% endif %}
+        </h5>
+        <button class="notification-close" id="notificationDialogClose">&times;</button>
+    </div>
+    
+    <!-- NEW: Advanced Filters -->
+    <div class="notification-filters-container">
+        <div class="notification-filters-toggle" id="notificationFiltersToggle">
+            <h6>Advanced Filters</h6>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="notification-filters-content" id="notificationFiltersContent">
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">Action Type</label>
+                <select class="notification-filter-select" id="filterActionType">
+                    <option value="">All Actions</option>
+                    <option value="sent">Sent</option>
+                    <option value="used">Used</option>
+                    <option value="added">Added</option>
+                    <option value="updated">Updated</option>
+                    <option value="restocked">Restocked</option>
+                    <option value="deleted">Deleted</option>
+                </select>
+            </div>
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">Status</label>
+                <select class="notification-filter-select" id="filterStatus">
+                    <option value="">All Status</option>
+                    <option value="unread">Unread Only</option>
+                    <option value="read">Read Only</option>
+                </select>
+            </div>
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">From Date</label>
+                <input type="date" class="notification-filter-date" id="filterFromDate">
+            </div>
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">To Date</label>
+                <input type="date" class="notification-filter-date" id="filterToDate">
+            </div>
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">Station</label>
+                <select class="notification-filter-select" id="filterStation">
+                    <option value="">All Stations</option>
+                    {% for station in stations %}
+                    <option value="{{ station.name }}">{{ station.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="notification-filter-group">
+                <label class="notification-filter-label">User</label>
+                <select class="notification-filter-select" id="filterUser">
+                    <option value="">All Users</option>
+                    {% for user in users|unique(attribute='username') %}
+                    <option value="{{ user.username }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="notification-filter-actions">
+                <button class="notification-filter-btn notification-filter-apply" id="applyFiltersBtn">
+                    Apply Filters
+                </button>
+                <button class="notification-filter-btn notification-filter-clear" id="clearFiltersBtn">
+                    Clear
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search Bar -->
+    <div class="notification-search-container">
+        <div class="notification-search">
+            <i class="fas fa-search notification-search-icon"></i>
+            <input type="text" 
+                   class="notification-search-input" 
+                   id="notificationSearchInput" 
+                   placeholder="Search notifications...">
+            <button class="notification-clear-search" id="notificationClearSearch" title="Clear search">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search Results Info -->
+    <div class="notification-search-info" id="notificationSearchInfo">
+        <div>
+            Found <span class="notification-search-count" id="notificationSearchCount">0</span> notifications
+            <span id="notificationSearchTerm"></span>
+        </div>
+        <button class="notification-clear-filters" id="clearAllFiltersBtn">Clear All Filters</button>
+    </div>
+    
+    <div class="notification-body" id="notificationList">
+        {% if recent_activity %}
+            {% for activity in recent_activity %}
+            <div class="notification-item {% if activity.is_unread %}unread{% endif %}" 
+                 data-id="{{ activity.id }}"
+                 data-action="{{ activity.action|lower }}"
+                 data-status="{% if activity.is_unread %}unread{% else %}read{% endif %}"
+                 data-timestamp="{{ activity.timestamp if activity.timestamp else '' }}"
+                 data-station="{{ activity.station_name or '' }}"
+                 data-user="{{ activity.user_name or '' }}"
+                 onclick="toggleNotificationExpansion(this, event)">
+                <div class="d-flex">
+                    <div class="notification-icon {{ activity.action|lower }}">
+                        {% if activity.action == 'Sent' %}
+                        <i class="fas fa-paper-plane fa-sm"></i>
+                        {% elif activity.action == 'Used' %}
+                        <i class="fas fa-print fa-sm"></i>
+                        {% elif activity.action == 'Added' %}
+                        <i class="fas fa-plus fa-sm"></i>
+                        {% elif activity.action == 'Updated' %}
+                        <i class="fas fa-edit fa-sm"></i>
+                        {% elif activity.action == 'Restocked' %}
+                        <i class="fas fa-boxes fa-sm"></i>
+                        {% elif activity.action == 'Deleted' %}
+                        <i class="fas fa-trash fa-sm"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle fa-sm"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="notification-title">
+                            <span>{{ activity.action }}</span>
+                            <span class="notification-time">
+                                {{ activity.time_ago }}
+                                <i class="fas fa-chevron-down notification-expand-icon"></i>
+                            </span>
+                        </div>
+                        <p class="notification-preview">{{ activity.details|truncate(80) }}</p>
+                        
+                        <!-- Full details section (hidden by default) -->
+                        <div class="notification-full-details">
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Description:</div>
+                                <div class="notification-detail-value">{{ activity.details }}</div>
+                            </div>
+                            {% if activity.item_name %}
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Item:</div>
+                                <div class="notification-detail-value">{{ activity.item_name }}</div>
+                            </div>
+                            {% endif %}
+                            {% if activity.quantity %}
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Quantity:</div>
+                                <div class="notification-detail-value">{{ activity.quantity }}</div>
+                            </div>
+                            {% endif %}
+                            {% if activity.station_name %}
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Station:</div>
+                                <div class="notification-detail-value">{{ activity.station_name }}</div>
+                            </div>
+                            {% endif %}
+                            {% if activity.notes %}
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Notes:</div>
+                                <div class="notification-detail-value">{{ activity.notes }}</div>
+                            </div>
+                            {% endif %}
+                            {% if activity.timestamp %}
+                            <div class="notification-detail-item">
+                                <div class="notification-detail-label">Timestamp:</div>
+                                <div class="notification-detail-value">{{ activity.timestamp }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="notification-user">
+                            <i class="fas fa-user-circle me-1"></i>{{ activity.user_name or 'System' }}
+                            {% if activity.station_name %}
+                            <span class="ms-2">
+                                <i class="fas fa-location-dot me-1"></i>{{ activity.station_name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                <p class="mb-1">No recent activity</p>
+                <p class="small text-muted">Your notifications will appear here</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="notification-footer">
+        <button class="mark-all-read" id="markAllReadBtn">
+            <i class="fas fa-check-double me-2"></i>Mark all as read
+        </button>
+    </div>
+</div>
+
+<!-- The rest of your template remains exactly the same -->
+<div class="container-fluid">
+    <!-- Header with Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-boxes me-2 text-primary"></i>Stock Management
+            </h2>
+            <p class="text-muted mb-0">Manage toner cartridges and other inventory items</p>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Notification Bell Button -->
+            <button class="btn btn-outline-primary position-relative d-flex align-items-center me-2" 
+                    id="notificationBellBtn">
+                <i class="fas fa-bell notification-bell me-2"></i>
+                Notifications
+                {% if unread_notifications_count > 0 %}
+                <span class="notification-badge">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </button>
+            
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Dashboard
+            </a>
+            <button class="btn btn-najmi-primary" data-bs-toggle="modal" data-bs-target="#addStockModal">
+                <i class="fas fa-plus-circle me-2"></i>Add New Item
+            </button>
+        </div>
+    </div>
+
+    <!-- The rest of your template remains exactly the same -->
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 card-stock animate-delay-1">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1" style="color: #ec4899;">{{ total_stock_items }}</h2>
+                            <p class="stat-label text-muted mb-0">Total Items</p>
+                            <small class="text-success">
+                                <i class="fas fa-box me-1"></i>All Stock
+                            </small>
+                        </div>
+                        <div style="background-color: rgba(236, 72, 153, 0.1);" class="p-3 rounded">
+                            <i class="fas fa-boxes" style="color: #ec4899; font-size: 1.8rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 card-toner animate-delay-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1" style="color: #8b5cf6;">{{ toner_count }}</h2>
+                            <p class="stat-label text-muted mb-0">Toner Cartridges</p>
+                            <small class="text-success">
+                                <i class="fas fa-print me-1"></i>Available
+                            </small>
+                        </div>
+                        <div style="background-color: rgba(139, 92, 246, 0.1);" class="p-3 rounded">
+                            <i class="fas fa-print" style="color: #8b5cf6; font-size: 1.8rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100 animate-delay-3" style="border-left: 4px solid #10b981;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1 text-success">{{ in_stock_count }}</h2>
+                            <p class="stat-label text-muted mb-0">In Stock</p>
+                            <small class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>Available for use
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-check-circle text-success" style="font-size: 1.8rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1 text-warning">{{ low_stock_count }}</h2>
+                            <p class="stat-label text-muted mb-0">Low Stock Items</p>
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Need restocking
+                            </small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 1.8rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body py-2">
+            <form method="GET" action="{{ url_for('admin.stock_management') }}" class="row g-2">
+                <div class="col-md-3">
+                    <select name="item_type" class="form-select form-select-sm">
+                        <option value="">All Types</option>
+                        <option value="Toner" {% if current_filters.item_type == 'Toner' %}selected{% endif %}>Toner</option>
+                        <option value="Ink Cartridge" {% if current_filters.item_type == 'Ink Cartridge' %}selected{% endif %}>Ink Cartridge</option>
+                        <option value="Cable" {% if current_filters.item_type == 'Cable' %}selected{% endif %}>Cable</option>
+                        <option value="Adapter" {% if current_filters.item_type == 'Adapter' %}selected{% endif %}>Adapter</option>
+                        <option value="Other" {% if current_filters.item_type == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        <option value="In Stock" {% if current_filters.status == 'In Stock' %}selected{% endif %}>In Stock</option>
+                        <option value="Sent" {% if current_filters.status == 'Sent' %}selected{% endif %}>Sent</option>
+                        <option value="Used" {% if current_filters.status == 'Used' %}selected{% endif %}>Used</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="low_stock" value="1" id="lowStockCheck" {% if current_filters.low_stock %}checked{% endif %}>
+                        <label class="form-check-label" for="lowStockCheck">
+                            Low Stock Only
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{{ url_for('admin.stock_management') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times-circle me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stock Items Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>All Stock Items
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if stock_items %}
+            <div class="table-container">
+                <table class="table table-hover stock-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Purchase Date</th>
+                            <th>Supplier</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stock_items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.item_type == 'Toner' %}
+                                    <i class="fas fa-print text-primary me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-box text-secondary me-2"></i>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ item.item_name }}</strong>
+                                        {% if item.model_number %}
+                                        <div class="text-muted small">{{ item.model_number }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if item.item_type == 'Toner' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                    {{ item.item_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="stock-quantity-badge {% if item.quantity <= 2 %}bg-danger{% elif item.quantity <= 5 %}bg-warning{% else %}bg-success{% endif %}">
+                                    {{ item.quantity }} in stock
+                                </span>
+                            </td>
+                            <td>
+                                {% if item.status == 'In Stock' %}
+                                <span class="status-indicator status-in-stock"></span>In Stock
+                                {% elif item.status == 'Sent' %}
+                                <span class="status-indicator status-sent"></span>Sent
+                                {% elif item.status == 'Used' %}
+                                <span class="status-indicator status-used"></span>Used
+                                {% endif %}
+                            </td>
+                            <td>{{ item.purchase_date.strftime('%Y-%m-%d') if item.purchase_date else 'N/A' }}</td>
+                            <td>{{ item.supplier or 'N/A' }}</td>
+                            <td class="stock-actions">
+                                <a href="{{ url_for('admin.view_stock_item', item_id=item.id) }}" class="btn btn-sm btn-outline-info" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editStockModal"
+                                        onclick="setEditStockData('{{ item.id }}', '{{ item.item_name|replace("'", "\\'") }}', '{{ item.item_type }}', '{{ item.quantity }}', '{{ item.supplier or ""|replace("'", "\\'") }}', '{{ item.model_number or ""|replace("'", "\\'") }}', '{{ item.compatible_with or ""|replace("'", "\\'") }}', '{{ item.notes or ""|replace("'", "\\'") }}', '{{ item.purchase_date.strftime('%Y-%m-%d') if item.purchase_date else "" }}')"
+                                        title="Edit Item">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteStockItem('{{ item.id }}')" title="Delete Item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box display-1 text-muted mb-3"></i>
+                <h5 class="text-muted mb-3">No Stock Items Found</h5>
+                <p class="text-muted mb-4">Add your first stock item like toner cartridges, cables, or other supplies</p>
+                <button class="btn btn-najmi-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addStockModal">
+                    <i class="fas fa-plus-circle me-2"></i>Add First Stock Item
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+  
+<!-- The rest of your modals and JavaScript remain exactly the same -->
+<!-- Add Stock Modal -->
+<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addStockModalLabel">
+                    <i class="fas fa-boxes me-2"></i>Add New Stock Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.add_stock_item') }}" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="itemName" class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" id="itemName" name="item_name" placeholder="e.g., HP LaserJet Toner" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="itemType" class="form-label">Item Type *</label>
+                            <select class="form-select" id="itemType" name="item_type" required>
+                                <option value="">Select Type</option>
+                                <option value="Toner">Toner</option>
+                                <option value="Ink Cartridge">Ink Cartridge</option>
+                                <option value="Cable">Cable</option>
+                                <option value="Adapter">Adapter</option>
+                                <option value="Battery">Battery</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="quantity" class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="purchaseDate" class="form-label">Purchase Date</label>
+                            <input type="date" class="form-control" id="purchaseDate" name="purchase_date" value="{{ today }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="supplier" class="form-label">Supplier</label>
+                            <input type="text" class="form-control" id="supplier" name="supplier" placeholder="e.g., HP Distributor">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modelNumber" class="form-label">Model Number</label>
+                            <input type="text" class="form-control" id="modelNumber" name="model_number" placeholder="e.g., CF400X">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="compatibleWith" class="form-label">Compatible With</label>
+                            <input type="text" class="form-control" id="compatibleWith" name="compatible_with" placeholder="e.g., HP LaserJet Pro M404">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Any additional information..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Stock Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stock Item Modal -->
+<div class="modal fade" id="editStockModal" tabindex="-1" aria-labelledby="editStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editStockModalLabel">
+                    <i class="fas fa-edit me-2"></i>Edit Stock Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.edit_stock_item') }}" method="POST">
+                <input type="hidden" id="editStockItemId" name="stock_item_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editItemName" class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" id="editItemName" name="item_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editItemType" class="form-label">Item Type *</label>
+                            <select class="form-select" id="editItemType" name="item_type" required>
+                                <option value="Toner">Toner</option>
+                                <option value="Ink Cartridge">Ink Cartridge</option>
+                                <option value="Cable">Cable</option>
+                                <option value="Adapter">Adapter</option>
+                                <option value="Battery">Battery</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="editQuantity" class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" id="editQuantity" name="quantity" min="1" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editPurchaseDate" class="form-label">Purchase Date</label>
+                            <input type="date" class="form-control" id="editPurchaseDate" name="purchase_date">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="editSupplier" class="form-label">Supplier</label>
+                            <input type="text" class="form-control" id="editSupplier" name="supplier">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editModelNumber" class="form-label">Model Number</label>
+                            <input type="text" class="form-control" id="editModelNumber" name="model_number">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCompatibleWith" class="form-label">Compatible With</label>
+                            <input type="text" class="form-control" id="editCompatibleWith" name="compatible_with">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="editNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="updateStatusModalLabel">
+                    <i class="fas fa-exchange-alt me-2"></i>Update Stock Status
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.update_stock_status') }}" method="POST">
+                <input type="hidden" id="statusItemId" name="stock_item_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <p class="mb-2">Item: <strong id="statusItemName"></strong></p>
+                        <p class="mb-3">Type: <span class="badge bg-primary" id="statusItemType"></span></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Update Status To:</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="status" id="statusSent" value="sent" checked>
+                            <label class="form-check-label" for="statusSent">
+                                <span class="status-indicator status-sent"></span> Sent to Station
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="status" id="statusUsed" value="used">
+                            <label class="form-check-label" for="statusUsed">
+                                <span class="status-indicator status-used"></span> Used
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="sentDetails">
+                        <div class="mb-3">
+                            <label for="sentToStation" class="form-label">Sent to Station</label>
+                            <select class="form-select" id="sentToStation" name="sent_to_station">
+                                <option value="">Select Station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.location }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sentDate" class="form-label">Date Sent</label>
+                            <input type="date" class="form-control" id="sentDate" name="sent_date" value="{{ today }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sentNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="sentNotes" name="sent_notes" rows="2" placeholder="Any notes about sending..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="usedDetails" style="display: none;">
+                        <div class="mb-3">
+                            <label for="usedForPrinter" class="form-label">Used for Printer</label>
+                            <input type="text" class="form-control" id="usedForPrinter" name="used_for_printer" placeholder="Printer model or name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="usedAtStation" class="form-label">Used at Station</label>
+                            <select class="form-select" id="usedAtStation" name="used_at_station">
+                                <option value="">Select Station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.location }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="usedDate" class="form-label">Date Used</label>
+                            <input type="date" class="form-control" id="usedDate" name="used_date" value="{{ today }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="usageNotes" class="form-label">Usage Notes</label>
+                            <textarea class="form-control" id="usageNotes" name="usage_notes" rows="2" placeholder="Any notes about the usage..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restock Modal -->
+<div class="modal fade" id="restockModal" tabindex="-1" aria-labelledby="restockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="restockModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Restock Item
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="POST" id="restockForm">
+                <input type="hidden" id="restockItemId" name="item_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <p class="mb-2">Item: <strong id="restockItemName"></strong></p>
+                        <p class="mb-3">Current Quantity: <span class="badge bg-info" id="currentQuantity"></span></p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="additionalQuantity" class="form-label">Additional Quantity *</label>
+                        <input type="number" class="form-control" id="additionalQuantity" name="quantity" min="1" value="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set edit stock data
+    function setEditStockData(itemId, itemName, itemType, quantity, supplier, modelNumber, compatibleWith, notes, purchaseDate) {
+        document.getElementById('editStockItemId').value = itemId;
+        document.getElementById('editItemName').value = itemName;
+        document.getElementById('editItemType').value = itemType;
+        document.getElementById('editQuantity').value = quantity;
+        document.getElementById('editSupplier').value = supplier;
+        document.getElementById('editModelNumber').value = modelNumber;
+        document.getElementById('editCompatibleWith').value = compatibleWith;
+        document.getElementById('editNotes').value = notes;
+        document.getElementById('editPurchaseDate').value = purchaseDate;
+    }
+
+    // Set status update data
+    function setStatusData(itemId, itemName, itemType) {
+        document.getElementById('statusItemId').value = itemId;
+        document.getElementById('statusItemName').textContent = itemName;
+        document.getElementById('statusItemType').textContent = itemType;
+    }
+
+    // Set restock data
+    function setRestockData(itemId, itemName, currentQuantity) {
+        document.getElementById('restockItemId').value = itemId;
+        document.getElementById('restockItemName').textContent = itemName;
+        document.getElementById('currentQuantity').textContent = currentQuantity;
+        document.getElementById('restockForm').action = `/admin/restock_item/${itemId}`;
+    }
+
+    // Delete stock item
+    function deleteStockItem(itemId) {
+        if (confirm('Are you sure you want to delete this stock item? This action cannot be undone.')) {
+            fetch(`/admin/delete_stock_item/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error deleting item');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting item');
+            });
+        }
+    }
+
+    // Toggle between sent and used details in status modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const sentRadio = document.getElementById('statusSent');
+        const usedRadio = document.getElementById('statusUsed');
+        const sentDetails = document.getElementById('sentDetails');
+        const usedDetails = document.getElementById('usedDetails');
+        
+        if (sentRadio && usedRadio) {
+            sentRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    sentDetails.style.display = 'block';
+                    usedDetails.style.display = 'none';
+                }
+            });
+            
+            usedRadio.addEventListener('change', function() {
+                if (this.checked) {
+                    sentDetails.style.display = 'none';
+                    usedDetails.style.display = 'block';
+                }
+            });
+        }
+        
+        // Set today's date for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        const dateInputs = ['purchaseDate', 'sentDate', 'usedDate', 'editPurchaseDate'];
+        
+        dateInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input && !input.value) {
+                input.value = today;
+            }
+        });
+    });
+
+    // NOTIFICATION DIALOG FUNCTIONALITY
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationBellBtn = document.getElementById('notificationBellBtn');
+        const notificationDialog = document.getElementById('notificationDialog');
+        const notificationOverlay = document.getElementById('notificationOverlay');
+        const notificationDialogClose = document.getElementById('notificationDialogClose');
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        const notificationList = document.getElementById('notificationList');
+        const notificationBadge = document.querySelector('.notification-badge');
+        
+        // Search elements
+        const notificationSearchInput = document.getElementById('notificationSearchInput');
+        const notificationClearSearch = document.getElementById('notificationClearSearch');
+        const notificationSearchInfo = document.getElementById('notificationSearchInfo');
+        const notificationSearchCount = document.getElementById('notificationSearchCount');
+        const notificationSearchTerm = document.getElementById('notificationSearchTerm');
+        const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+        
+        // NEW: Advanced filter elements
+        const notificationFiltersToggle = document.getElementById('notificationFiltersToggle');
+        const notificationFiltersContent = document.getElementById('notificationFiltersContent');
+        const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        const filterActionType = document.getElementById('filterActionType');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterFromDate = document.getElementById('filterFromDate');
+        const filterToDate = document.getElementById('filterToDate');
+        const filterStation = document.getElementById('filterStation');
+        const filterUser = document.getElementById('filterUser');
+        
+        let isNotificationDialogOpen = false;
+        let expandedNotificationId = null;
+        let currentFilters = {
+            searchTerm: '',
+            actionType: '',
+            status: '',
+            fromDate: '',
+            toDate: '',
+            station: '',
+            user: ''
+        };
+        
+        // Open notification dialog
+        notificationBellBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openNotificationDialog();
+        });
+        
+        // Close notification dialog
+        notificationDialogClose.addEventListener('click', function() {
+            closeNotificationDialog();
+        });
+        
+        // Close when clicking overlay - REMOVED to prevent disappearing
+        // notificationOverlay.addEventListener('click', function() {
+        //     closeNotificationDialog();
+        // });
+        
+        // Close with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isNotificationDialogOpen) {
+                closeNotificationDialog();
+            }
+        });
+        
+        // Mark all as read
+        markAllReadBtn.addEventListener('click', function() {
+            // In a real app, make API call to mark all as read
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+                item.dataset.status = 'read';
+            });
+            
+            // Update badge
+            updateNotificationBadge(0);
+            
+            // Re-apply filters to reflect status changes
+            applyFilters();
+        });
+        
+        // Mark single notification as read when clicked
+        notificationList.addEventListener('click', function(e) {
+            const notificationItem = e.target.closest('.notification-item');
+            
+            if (notificationItem && notificationItem.classList.contains('unread')) {
+                notificationItem.classList.remove('unread');
+                notificationItem.dataset.status = 'read';
+                
+                // Update unread count
+                const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+                updateNotificationBadge(unreadCount);
+                
+                // Re-apply filters if status filter is active
+                if (currentFilters.status === 'unread') {
+                    applyFilters();
+                }
+            }
+        });
+        
+        // Search functionality
+        notificationSearchInput.addEventListener('input', function() {
+            currentFilters.searchTerm = this.value.toLowerCase().trim();
+            
+            // Show/hide clear button
+            if (currentFilters.searchTerm) {
+                notificationClearSearch.style.display = 'block';
+            } else {
+                notificationClearSearch.style.display = 'none';
+            }
+            
+            // Apply filters
+            applyFilters();
+        });
+        
+        // Clear search
+        notificationClearSearch.addEventListener('click', function() {
+            notificationSearchInput.value = '';
+            currentFilters.searchTerm = '';
+            notificationClearSearch.style.display = 'none';
+            applyFilters();
+            notificationSearchInput.focus();
+        });
+        
+        // NEW: Toggle advanced filters
+        notificationFiltersToggle.addEventListener('click', function() {
+            notificationFiltersToggle.classList.toggle('active');
+            notificationFiltersContent.classList.toggle('show');
+        });
+        
+        // NEW: Apply advanced filters
+        applyFiltersBtn.addEventListener('click', function() {
+            currentFilters.actionType = filterActionType.value;
+            currentFilters.status = filterStatus.value;
+            currentFilters.fromDate = filterFromDate.value;
+            currentFilters.toDate = filterToDate.value;
+            currentFilters.station = filterStation.value.toLowerCase();
+            currentFilters.user = filterUser.value.toLowerCase();
+            
+            applyFilters();
+        });
+        
+        // NEW: Clear advanced filters
+        clearFiltersBtn.addEventListener('click', function() {
+            filterActionType.value = '';
+            filterStatus.value = '';
+            filterFromDate.value = '';
+            filterToDate.value = '';
+            filterStation.value = '';
+            filterUser.value = '';
+            
+            currentFilters.actionType = '';
+            currentFilters.status = '';
+            currentFilters.fromDate = '';
+            currentFilters.toDate = '';
+            currentFilters.station = '';
+            currentFilters.user = '';
+            
+            applyFilters();
+        });
+        
+        // NEW: Clear all filters
+        clearAllFiltersBtn.addEventListener('click', function() {
+            // Clear search
+            notificationSearchInput.value = '';
+            currentFilters.searchTerm = '';
+            notificationClearSearch.style.display = 'none';
+            
+            // Clear advanced filters
+            filterActionType.value = '';
+            filterStatus.value = '';
+            filterFromDate.value = '';
+            filterToDate.value = '';
+            filterStation.value = '';
+            filterUser.value = '';
+            
+            currentFilters.actionType = '';
+            currentFilters.status = '';
+            currentFilters.fromDate = '';
+            currentFilters.toDate = '';
+            currentFilters.station = '';
+            currentFilters.user = '';
+            
+            applyFilters();
+            notificationSearchInput.focus();
+        });
+        
+        // NEW: Apply all filters function
+        function applyFilters() {
+            const notificationItems = document.querySelectorAll('.notification-item');
+            let visibleCount = 0;
+            let hasActiveFilters = false;
+            const filterDescriptions = [];
+            
+            // Check if any filters are active
+            if (currentFilters.searchTerm) {
+                hasActiveFilters = true;
+                filterDescriptions.push(`"${currentFilters.searchTerm}"`);
+            }
+            if (currentFilters.actionType) {
+                hasActiveFilters = true;
+                filterDescriptions.push(`${currentFilters.actionType}`);
+            }
+            if (currentFilters.status) {
+                hasActiveFilters = true;
+                filterDescriptions.push(`${currentFilters.status}`);
+            }
+            if (currentFilters.fromDate || currentFilters.toDate) {
+                hasActiveFilters = true;
+                const from = currentFilters.fromDate || 'any';
+                const to = currentFilters.toDate || 'any';
+                filterDescriptions.push(`date: ${from} to ${to}`);
+            }
+            if (currentFilters.station) {
+                hasActiveFilters = true;
+                filterDescriptions.push(`station: ${currentFilters.station}`);
+            }
+            if (currentFilters.user) {
+                hasActiveFilters = true;
+                filterDescriptions.push(`user: ${currentFilters.user}`);
+            }
+            
+            // Filter notifications
+            notificationItems.forEach(item => {
+                let shouldShow = true;
+                
+                // Apply text search filter
+                if (currentFilters.searchTerm) {
+                    const action = item.querySelector('.notification-title span:first-child').textContent.toLowerCase();
+                    const details = item.querySelector('.notification-preview').textContent.toLowerCase();
+                    const user = item.querySelector('.notification-user').textContent.toLowerCase();
+                    const fullDetails = item.querySelector('.notification-full-details')?.textContent.toLowerCase() || '';
+                    
+                    if (!(action.includes(currentFilters.searchTerm) || 
+                          details.includes(currentFilters.searchTerm) || 
+                          user.includes(currentFilters.searchTerm) ||
+                          fullDetails.includes(currentFilters.searchTerm))) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Apply action type filter
+                if (shouldShow && currentFilters.actionType) {
+                    const itemAction = item.dataset.action;
+                    if (itemAction !== currentFilters.actionType) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Apply status filter
+                if (shouldShow && currentFilters.status) {
+                    const itemStatus = item.dataset.status;
+                    if (itemStatus !== currentFilters.status) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Apply date range filter
+                if (shouldShow && (currentFilters.fromDate || currentFilters.toDate)) {
+                    const itemTimestamp = item.dataset.timestamp;
+                    if (itemTimestamp) {
+                        const itemDate = new Date(itemTimestamp);
+                        
+                        if (currentFilters.fromDate) {
+                            const fromDate = new Date(currentFilters.fromDate);
+                            if (itemDate < fromDate) {
+                                shouldShow = false;
+                            }
+                        }
+                        
+                        if (currentFilters.toDate) {
+                            const toDate = new Date(currentFilters.toDate);
+                            toDate.setHours(23, 59, 59, 999); // End of day
+                            if (itemDate > toDate) {
+                                shouldShow = false;
+                            }
+                        }
+                    } else if (currentFilters.fromDate || currentFilters.toDate) {
+                        // If no timestamp but date filter is active, hide the item
+                        shouldShow = false;
+                    }
+                }
+                
+                // Apply station filter
+                if (shouldShow && currentFilters.station) {
+                    const itemStation = item.dataset.station.toLowerCase();
+                    if (!itemStation.includes(currentFilters.station)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Apply user filter
+                if (shouldShow && currentFilters.user) {
+                    const itemUser = item.dataset.user.toLowerCase();
+                    if (!itemUser.includes(currentFilters.user)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                if (shouldShow) {
+                    item.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // Show/hide search results info
+            if (hasActiveFilters) {
+                let description = '';
+                if (filterDescriptions.length === 1) {
+                    description = `matching ${filterDescriptions[0]}`;
+                } else if (filterDescriptions.length > 1) {
+                    description = `with ${filterDescriptions.length} filters`;
+                }
+                
+                notificationSearchCount.textContent = visibleCount;
+                notificationSearchTerm.textContent = description;
+                notificationSearchInfo.classList.add('show');
+            } else {
+                notificationSearchInfo.classList.remove('show');
+            }
+        }
+        
+        function openNotificationDialog() {
+            notificationDialog.classList.add('show');
+            notificationOverlay.classList.add('show');
+            isNotificationDialogOpen = true;
+            
+            // Focus on search input when opening
+            setTimeout(() => {
+                notificationSearchInput.focus();
+            }, 100);
+            
+            // Disable page scroll when dialog is open
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeNotificationDialog() {
+            notificationDialog.classList.remove('show');
+            notificationOverlay.classList.remove('show');
+            isNotificationDialogOpen = false;
+            
+            // Clear filters when closing
+            notificationSearchInput.value = '';
+            currentFilters.searchTerm = '';
+            notificationClearSearch.style.display = 'none';
+            
+            // Clear advanced filters
+            filterActionType.value = '';
+            filterStatus.value = '';
+            filterFromDate.value = '';
+            filterToDate.value = '';
+            filterStation.value = '';
+            filterUser.value = '';
+            
+            currentFilters.actionType = '';
+            currentFilters.status = '';
+            currentFilters.fromDate = '';
+            currentFilters.toDate = '';
+            currentFilters.station = '';
+            currentFilters.user = '';
+            
+            notificationSearchInfo.classList.remove('show');
+            
+            // Show all notifications again
+            document.querySelectorAll('.notification-item.hidden').forEach(item => {
+                item.classList.remove('hidden');
+            });
+            
+            // Collapse any expanded notifications
+            document.querySelectorAll('.notification-item.expanded').forEach(item => {
+                item.classList.remove('expanded');
+            });
+            expandedNotificationId = null;
+            
+            // Re-enable page scroll
+            document.body.style.overflow = '';
+        }
+        
+        function updateNotificationBadge(count) {
+            if (count > 0) {
+                if (notificationBadge) {
+                    notificationBadge.textContent = count;
+                } else {
+                    // Create badge if it doesn't exist
+                    const bell = document.querySelector('.notification-bell');
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'notification-badge';
+                    newBadge.textContent = count;
+                    bell.parentNode.appendChild(newBadge);
+                }
+            } else if (notificationBadge) {
+                notificationBadge.remove();
+            }
+        }
+        
+        // Prevent dialog from closing when clicking inside it
+        notificationDialog.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Prevent overlay from closing dialog
+        notificationOverlay.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Initialize unread count from template variable
+        const initialUnreadCount = {{ unread_notifications_count or 0 }};
+        updateNotificationBadge(initialUnreadCount);
+        
+        // Set default date range to last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        filterFromDate.value = thirtyDaysAgo.toISOString().split('T')[0];
+        
+        const today = new Date();
+        filterToDate.value = today.toISOString().split('T')[0];
+        
+        // Apply default date filters
+        currentFilters.fromDate = filterFromDate.value;
+        currentFilters.toDate = filterToDate.value;
+        applyFilters();
+    });
+
+    // Function to toggle notification expansion
+    function toggleNotificationExpansion(notificationItem, event) {
+        // Don't toggle if clicking on the expand icon directly
+        if (event.target.classList.contains('notification-expand-icon')) {
+            return;
+        }
+        
+        const notificationId = notificationItem.dataset.id;
+        const isExpanded = notificationItem.classList.contains('expanded');
+        
+        // Close previously expanded notification if different
+        if (expandedNotificationId && expandedNotificationId !== notificationId) {
+            const previousExpanded = document.querySelector(`.notification-item[data-id="${expandedNotificationId}"]`);
+            if (previousExpanded) {
+                previousExpanded.classList.remove('expanded');
+            }
+        }
+        
+        // Toggle current notification
+        if (isExpanded) {
+            notificationItem.classList.remove('expanded');
+            expandedNotificationId = null;
+        } else {
+            notificationItem.classList.add('expanded');
+            expandedNotificationId = notificationId;
+            
+            // Auto-mark as read when expanded
+            if (notificationItem.classList.contains('unread')) {
+                notificationItem.classList.remove('unread');
+                notificationItem.dataset.status = 'read';
+                
+                // Update unread count
+                const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+                updateNotificationBadge(unreadCount);
+                
+                // Re-apply filters if status filter is active
+                if (currentFilters.status === 'unread') {
+                    applyFilters();
+                }
+            }
+            
+            // Scroll to make expanded notification visible
+            setTimeout(() => {
+                notificationItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    }
+    
+    // Global variable to track expanded notification
+    let expandedNotificationId = null;
+
+    // Auto-refresh notifications every 30 seconds (optional)
+    {% if unread_notifications_count > 0 %}
+    setInterval(() => {
+        // In a real application, you would fetch new notifications from the server
+        console.log('Checking for new notifications...');
+        // You can implement AJAX call here to update notifications without refreshing
+    }, 30000);
+    {% endif %}
+</script>
+{% endblock %}

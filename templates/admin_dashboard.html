@@ -20,16 +20,18 @@
       color: white;
       height: 100vh;
       position: fixed;
-      width: 260px;
+      width: 250px;
       box-shadow: 3px 0 15px rgba(0,0,0,0.1);
+      overflow-y: auto;
     }
     .sidebar .nav-link {
       color: rgba(255,255,255,0.8);
-      padding: 12px 20px;
-      margin: 2px 0;
-      border-radius: 8px;
+      padding: 10px 16px;
+      margin: 1px 0;
+      border-radius: 6px;
       transition: all 0.3s ease;
       font-weight: 500;
+      font-size: 0.9rem;
     }
     .sidebar .nav-link:hover, .sidebar .nav-link.active {
       color: white;
@@ -38,40 +40,254 @@
       border-left: 3px solid var(--najmi-secondary);
     }
     .main-content {
-      margin-left: 260px;
+      margin-left: 250px;
       padding: 0;
       background-color: #f7fafc;
       min-height: 100vh;
     }
+    
+    /* SMALLER TOP STAT CARDS */
     .stat-card {
-      border-radius: 12px;
+      border-radius: 10px;
       border: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-      border-left: 4px solid transparent;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      border-left: 3px solid transparent;
+      padding: 1rem;
     }
     .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 15px rgba(0,0,0,0.1);
     }
     .stat-card.computers { border-left-color: #4299e1; }
     .stat-card.network { border-left-color: #48bb78; }
     .stat-card.maintenance { border-left-color: #ed8936; }
     .stat-card.software { border-left-color: #9f7aea; }
     
-    .station-card {
-      border-radius: 12px;
-      border: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    .stat-card .card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-card .card-text {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .bg-opacity-10 {
+      padding: 0.6rem;
+      border-radius: 8px;
+    }
+    
+    .stat-card i {
+      font-size: 1.5rem;
+    }
+    
+    /* SMALLER TOP BUTTONS */
+    .top-navbar {
       background: white;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      padding: 10px 25px;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+    
+    .top-navbar h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.1rem;
+    }
+    
+    .top-navbar .text-muted {
+      font-size: 0.85rem;
+    }
+    
+    .user-badge {
+      background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .logout-btn {
+      background: rgba(229, 62, 62, 0.1);
+      color: var(--najmi-accent);
+      border: 1px solid rgba(229, 62, 62, 0.2);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+    }
+    
+    .logout-btn:hover {
+      background: var(--najmi-accent);
+      color: white;
+    }
+    
+    /* BLUE STATION CARDS */
+    .station-card {
+      background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
+      border-radius: 10px;
+      border: none;
+      transition: all 0.2s ease;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(26, 54, 93, 0.15);
+    }
+    
     .station-card:hover {
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
       transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(26, 54, 93, 0.2);
     }
+    
+    .station-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .station-header {
+      padding: 1rem;
+      color: white;
+    }
+    
+    .station-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .station-status {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .station-location {
+      font-size: 0.8rem;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .station-body {
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 0 0 10px 10px;
+      margin-top: -5px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .station-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+    }
+    
+    .station-id {
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .station-ready {
+      color: var(--najmi-success);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .station-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .station-btn {
+      flex: 1;
+      padding: 0.4rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      text-decoration: none;
+      border: 1px solid;
+      transition: all 0.2s ease;
+      color: white;
+    }
+    
+    .station-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+    
+    .station-btn.view {
+      background: var(--najmi-secondary);
+      border-color: var(--najmi-secondary);
+    }
+    
+    .station-btn.view:hover {
+      background: #1c64f2;
+      border-color: #1c64f2;
+    }
+    
+    .station-btn.edit {
+      background: #f59e0b;
+      border-color: #f59e0b;
+    }
+    
+    .station-btn.edit:hover {
+      background: #d97706;
+      border-color: #d97706;
+    }
+    
+    .station-btn.delete {
+      background: var(--najmi-accent);
+      border-color: var(--najmi-accent);
+    }
+    
+    .station-btn.delete:hover {
+      background: #c53030;
+      border-color: #c53030;
+    }
+    
     .logo-container {
-      padding: 25px 20px;
+      padding: 20px 16px;
       text-align: center;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       background: rgba(0,0,0,0.1);
@@ -83,83 +299,207 @@
       margin-top: 8px;
       letter-spacing: 0.5px;
     }
+    
+    /* SMALLER QUICK ACTION BUTTONS */
     .btn-najmi-primary {
       background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
       border: none;
       color: white;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       border-radius: 8px;
       font-weight: 600;
+      padding: 8px 16px;
+      font-size: 0.9rem;
     }
+    
     .btn-najmi-primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(45, 116, 218, 0.4);
+      box-shadow: 0 4px 15px rgba(45, 116, 218, 0.3);
       color: white;
     }
-    .top-navbar {
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      padding: 15px 30px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .content-area {
-      padding: 30px;
-    }
+    
     .quick-actions .btn {
-      border-radius: 10px;
-      padding: 12px 20px;
+      border-radius: 8px;
+      padding: 8px 16px;
       font-weight: 500;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
     }
+    
     .quick-actions .btn:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
+    
+    .content-area {
+      padding: 20px;
     }
-    .status-active { background: var(--najmi-success); }
-    .status-maintenance { background: var(--najmi-warning); }
-    .status-offline { background: #a0aec0; }
-    .device-type-badge {
-      font-size: 0.7rem;
-      padding: 4px 8px;
+    
+    .user-info-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    /* Redesigned station action buttons */
-.station-actions {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-}
 
-.station-btn {
-    padding: 4px 8px !important;
-    font-size: 0.75rem !important;
-    border-radius: 6px !important;
-    min-width: auto;
-    flex: 1;
-    text-align: center;
-}
+    /* Sidebar Scrollbar */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.1);
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.3);
+    }
 
-.station-btn i {
-    font-size: 0.7rem;
-    margin-right: 2px;
-}
+    /* Theme Toggle */
+    .theme-toggle-container {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.05);
+      margin-top: auto;
+    }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0;
+    }
+    .theme-toggle-label {
+      color: rgba(255,255,255,0.9);
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-switch {
+      padding-left: 0;
+      margin: 0;
+    }
+    .form-switch .form-check-input {
+      margin-left: 0;
+      margin-top: 0;
+      background-color: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+      width: 2.5em;
+      height: 1.25em;
+    }
+    .form-switch .form-check-input:checked {
+      background-color: var(--najmi-secondary);
+      border-color: var(--najmi-secondary);
+    }
 
-.btn-group-compact {
-    display: flex;
-    gap: 4px;
-}
-
-.btn-group-compact .btn {
-    flex: 1;
-    padding: 4px 6px;
-    font-size: 0.75rem;
-    border-radius: 6px;
-}
+    /* Dark Theme Variables */
+    [data-theme="dark"] {
+        --najmi-primary: #0f172a;
+        --najmi-secondary: #1e40af;
+        --najmi-accent: #dc2626;
+        --najmi-success: #059669;
+        --najmi-warning: #ea580c;
+    }
+    [data-theme="dark"] .main-content {
+        background-color: #0f172a;
+        color: #e2e8f0;
+    }
+    [data-theme="dark"] .top-navbar {
+        background: #1e293b;
+        color: #e2e8f0;
+        border-bottom: 1px solid #334155;
+    }
+    [data-theme="dark"] .card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+    }
+    [data-theme="dark"] .card-header {
+        background: #334155 !important;
+        color: #e2e8f0;
+        border-bottom: 1px solid #475569;
+    }
+    [data-theme="dark"] .text-dark {
+        color: #e2e8f0 !important;
+    }
+    [data-theme="dark"] .text-muted {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .btn-light {
+        background: #334155;
+        border-color: #475569;
+        color: #e2e8f0;
+    }
+    [data-theme="dark"] .btn-outline-primary {
+        color: #60a5fa;
+        border-color: #60a5fa;
+    }
+    [data-theme="dark"] .btn-outline-primary:hover {
+        background: #60a5fa;
+        color: #1e293b;
+    }
+    
+    [data-theme="dark"] .station-card {
+        background: linear-gradient(135deg, #1e293b, #334155);
+    }
+    
+    [data-theme="dark"] .station-body {
+        background: #0f172a;
+    }
+    
+    [data-theme="dark"] .station-status {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    [data-theme="dark"] .station-id {
+        color: #94a3b8;
+    }
+    
+    [data-theme="dark"] .station-ready {
+        color: #10b981;
+    }
+    
+    [data-theme="dark"] .station-btn.view {
+        background: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    [data-theme="dark"] .station-btn.edit {
+        background: #f59e0b;
+        border-color: #f59e0b;
+    }
+    
+    [data-theme="dark"] .station-btn.delete {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+    
+    /* NEW: Fixed header and stats area, scrollable stations area */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px); /* Adjusted height to account for top navbar */
+    }
+    
+    .stats-quick-actions-area {
+      flex-shrink: 0;
+    }
+    
+    .stations-scrollable-area {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    
+    .stations-scrollable-area .card-body {
+      padding-bottom: 20px;
+    }
+    
+    /* Station grid container styling */
+    .stations-grid-container {
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -168,48 +508,60 @@
       <!-- Sidebar -->
       <div class="col-md-3 col-lg-2 sidebar d-md-block">
         <div class="logo-container">
-          <div class="brand-logo mb-3">
-            <div style="color: white; font-size: 2rem; font-weight: bold; line-height: 1.2;">
-              Najmi<br>
-              <span style="font-size: 0.9rem; font-weight: 400; letter-spacing: 2px;">INTERNATIONAL</span>
+          <div class="brand-logo">
+            <div style="color: white; text-align: center;">
+              <div style="font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 3px;">NAJMI</div>
+              <div style="font-size: 0.75rem; font-weight: 300; letter-spacing: 2.5px; text-transform: uppercase; opacity: 0.9;">INTERNATIONAL</div>
             </div>
           </div>
-          <div class="brand-text">IT Inventory System</div>
         </div>
         
-        <nav class="nav flex-column mt-4">
+        <!-- Navigation Menu -->
+        <nav class="nav flex-column mt-3">
           <a class="nav-link active" href="{{ url_for('admin.admin_dashboard') }}">
-            <i class="bi bi-speedometer2 me-3"></i>Dashboard
+            <i class="bi bi-speedometer2 me-2"></i>Dashboard
           </a>
-          <!-- ADD THIS LINE for Computers -->
+          <div class="px-3 mt-2 mb-1 text-uppercase small" style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">Equipment</div>
           <a class="nav-link" href="{{ url_for('admin.view_computers') }}">
-            <i class="bi bi-laptop me-3"></i>Computers
+            <i class="bi bi-laptop me-2"></i>Computers
           </a>
           <a class="nav-link" href="{{ url_for('admin.view_printers') }}">
-            <i class="bi bi-printer me-3"></i>Printers
+            <i class="bi bi-printer me-2"></i>Printers
           </a>
-          <!-- ADDED: Maintenance link -->
+          <a class="nav-link" href="{{ url_for('admin.view_routers') }}">
+            <i class="bi bi-router me-2"></i>Routers
+          </a>
+          <a class="nav-link" href="{{ url_for('admin.antivirus_list') }}">
+            <i class="bi bi-shield-check me-2"></i>Antivirus
+          </a>
+          <div class="px-3 mt-2 mb-1 text-uppercase small" style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">Operations</div>
           <a class="nav-link" href="{{ url_for('admin.maintenance_records') }}">
-            <i class="bi bi-tools me-3"></i>Maintenance
+            <i class="bi bi-tools me-2"></i>Maintenance
           </a>
-          <!-- ADDED: Transfers link -->
           <a class="nav-link" href="{{ url_for('admin.transfer_history') }}">
-            <i class="bi bi-arrow-left-right me-3"></i>Transfers
+            <i class="bi bi-arrow-left-right me-2"></i>Transfers
           </a>
           <a class="nav-link" href="{{ url_for('admin.send_items_history') }}">
-            <i class="bi bi-send me-3"></i>Sent Items
+            <i class="bi bi-send me-2"></i>Sent Items
+          </a>
+          <a class="nav-link" href="{{ url_for('admin.stock_management') }}">
+            <i class="bi bi-box-seam me-2"></i>Stock
+          </a>
+          <div class="px-3 mt-2 mb-1 text-uppercase small" style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">Security</div>
+          <a class="nav-link" href="{{ url_for('admin.login_activities') }}">
+            <i class="bi bi-clock-history me-2"></i>Login Activities
           </a>
         </nav>
         
-        <div class="mt-auto p-3 position-absolute bottom-0 w-100 border-top border-secondary">
-          <div class="d-flex align-items-center">
-            <div class="flex-grow-1">
-              <small class="text-light opacity-75 d-block">Logged in as</small>
-              <div class="text-white fw-semibold">{{ session.username }}</div>
+        <!-- Theme Toggle -->
+        <div class="theme-toggle-container">
+          <div class="theme-toggle">
+            <label class="theme-toggle-label" for="themeToggle">
+              <i class="bi bi-moon"></i>Dark Mode
+            </label>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="themeToggle" onchange="toggleTheme()">
             </div>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm" title="Logout">
-              <i class="bi bi-box-arrow-right"></i>
-            </a>
           </div>
         </div>
       </div>
@@ -220,208 +572,273 @@
         <div class="top-navbar">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h4 class="mb-0 fw-bold text-dark">IT Inventory Dashboard</h4>
+              <h4 class="mb-0 fw-bold text-dark"></h4>
               <p class="text-muted mb-0">Welcome back, {{ session.username }}</p>
             </div>
             <div class="d-flex gap-3 align-items-center">
+              <!-- User Info and Logout on Right -->
+              <div class="user-info-right">
+                <div class="user-badge">
+                  <i class="bi bi-person-circle me-1"></i>{{ session.username }} ({{ session.role }})
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Logout">
+                  <i class="bi bi-box-arrow-right me-1"></i>Logout
+                </a>
+              </div>
+              
+              <!-- Login Activities Notification Dropdown -->
               <div class="dropdown">
-                <button class="btn btn-light border" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-light border position-relative" type="button" data-bs-toggle="dropdown">
                   <i class="bi bi-bell text-muted"></i>
-                  {% if stations|length > 0 %}
-                  <span class="badge bg-primary position-absolute top-0 start-100 translate-middle">{{ stations|length }}</span>
+                  {% if active_sessions_count > 0 %}
+                  <span class="badge bg-primary position-absolute top-0 start-100 translate-middle">{{ active_sessions_count }}</span>
                   {% endif %}
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}">
-                    <i class="bi bi-pc-display me-2"></i>{{ stations|length }} Stations Active
-                  </a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('admin.view_printers') }}">
-                    <i class="bi bi-printer me-2"></i>View Printers
-                  </a></li>
-                  <!-- ADDED: Maintenance in dropdown -->
-                  <li><a class="dropdown-item" href="{{ url_for('admin.maintenance_records') }}">
-                    <i class="bi bi-tools me-2"></i>Maintenance Records
-                  </a></li>
-                  <!-- ADDED: Transfers in dropdown -->
-                  <li><a class="dropdown-item" href="{{ url_for('admin.transfer_history') }}">
-                    <i class="bi bi-arrow-left-right me-2"></i>Transfer History
-                  </a></li>
+                <ul class="dropdown-menu dropdown-menu-end" style="width: 350px;">
+                  <li>
+                    <div class="px-3 py-2 border-bottom">
+                      <h6 class="mb-0">
+                        <i class="bi bi-person-check me-2 text-primary"></i>Login Activities
+                        {% if active_sessions_count > 0 %}
+                        <span class="badge bg-success ms-2">{{ active_sessions_count }} active</span>
+                        {% endif %}
+                      </h6>
+                    </div>
+                  </li>
+                  {% if login_activities %}
+                    {% for activity in login_activities %}
+                    <li>
+                      <div class="px-3 py-2 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <div>
+                            <strong class="d-block">{{ activity.username }}</strong>
+                            <small class="text-muted d-block">
+                              <i class="bi bi-pc me-1"></i>{{ activity.computer_name or 'Unknown PC' }}
+                            </small>
+                            <small class="text-muted d-block">
+                              <i class="bi bi-clock me-1"></i>
+                              {% if activity.login_time %}
+                                {{ activity.login_time.strftime('%H:%M') }}
+                              {% endif %}
+                            </small>
+                          </div>
+                          <div>
+                            {% if activity.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Logged out</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        {% if activity.ip_address %}
+                        <small class="text-muted">
+                          <i class="bi bi-globe me-1"></i>IP: {{ activity.ip_address }}
+                        </small>
+                        {% endif %}
+                      </div>
+                    </li>
+                    {% endfor %}
+                  {% else %}
+                    <li>
+                      <div class="px-3 py-3 text-center">
+                        <i class="bi bi-person-x text-muted mb-2" style="font-size: 1.5rem;"></i>
+                        <p class="text-muted mb-0 small">No recent login activities</p>
+                      </div>
+                    </li>
+                  {% endif %}
+                  
+                  <li>
+                    <div class="px-3 py-2 border-top">
+                      <h6 class="mb-0">
+                        <i class="bi bi-pc-display me-2 text-info"></i>Stations
+                      </h6>
+                    </div>
+                  </li>
+                  <li>
+                    <a class="dropdown-item d-flex justify-content-between align-items-center" 
+                       href="{{ url_for('admin.admin_dashboard') }}">
+                      <span>
+                        <i class="bi bi-pc-display me-2"></i>Active Stations
+                      </span>
+                      <span class="badge bg-primary">{{ stations|length if stations else 0 }}</span>
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Content Area -->
         <div class="content-area">
-          <!-- Quick Actions -->
-          <div class="row mb-4 quick-actions">
-            <div class="col-12">
-              <div class="d-flex gap-3 flex-wrap">
-                <a class="btn btn-najmi-primary" href="{{ url_for('admin.add_station') }}">
-                  <i class="bi bi-plus-circle me-2"></i>Add New Station
-                </a>
-                <a class="btn btn-outline-primary" href="{{ url_for('admin.send_items') }}">
-                  <i class="bi bi-printer me-2"></i>Send Items
-                </a>
-                
-                <!-- ADDED: Transfer Equipment button -->
-                <a class="btn btn-outline-info" href="{{ url_for('admin.transfer_equipment') }}">
-                  <i class="bi bi-arrow-left-right me-2"></i>Transfer Equipment
-                </a>
-               
-                <!-- ADDED: Add Maintenance action button -->
-                <a class="btn btn-outline-warning" href="{{ url_for('admin.add_maintenance') }}">
-                  <i class="bi bi-tools me-2"></i>Add Maintenance
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Stats Overview -->
-          <div class="row mb-5">
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card stat-card computers h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h2 class="card-title text-primary">{{ stations|length }}</h2>
-                      <p class="card-text text-muted">IT Stations</p>
-                      <small class="text-success">
-                        <i class="bi bi-check-circle me-1"></i>All Active
-                      </small>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 p-3 rounded">
-                      <i class="bi bi-pc-display-horizontal text-primary" style="font-size: 2rem;"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card stat-card network h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-    <h2 class="card-title text-success">{{ total_devices }}</h2>
-    <p class="card-text text-muted">Total Devices</p>
-    <small class="text-success">
-        <i class="bi bi-check-circle me-1"></i>{{ computers_count }} computers, {{ printers_count }} printers
-    </small>
-</div>
-                    <div class="bg-success bg-opacity-10 p-3 rounded">
-                      <i class="bi bi-wifi text-success" style="font-size: 2rem;"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card stat-card maintenance h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h2 class="card-title text-warning">0</h2>
-                      <p class="card-text text-muted">System Status</p>
-                      <small class="text-success">
-                        <i class="bi bi-check-circle me-1"></i>All Systems Operational
-                      </small>
-                    </div>
-                    <div class="bg-warning bg-opacity-10 p-3 rounded">
-                      <i class="bi bi-activity text-warning" style="font-size: 2rem;"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card stat-card software h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h2 class="card-title text-info">100%</h2>
-                      <p class="card-text text-muted">Inventory Coverage</p>
-                      <small class="text-success">
-                        <i class="bi bi-check-circle me-1"></i>Complete
-                      </small>
-                    </div>
-                    <div class="bg-info bg-opacity-10 p-3 rounded">
-                      <i class="bi bi-clipboard-check text-info" style="font-size: 2rem;"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recent Stations -->
-          <div class="row">
-            <!-- Stations Grid -->
-            <div class="col-12">
-              <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                  <h5 class="card-title mb-0 text-dark">
-                    <i class="bi bi-pc-display me-2 text-primary"></i>IT Stations ({{ stations|length }})
-                  </h5>
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.add_station') }}">
-                    <i class="bi bi-plus-circle me-1"></i>Add Station
+          <!-- Fixed section: Quick Actions and Stats -->
+          <div class="stats-quick-actions-area">
+            <!-- Quick Actions -->
+            <div class="row mb-4 quick-actions">
+              <div class="col-12">
+                <div class="d-flex gap-3 flex-wrap">
+                  <a class="btn btn-najmi-primary" href="{{ url_for('admin.add_station') }}">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Station
+                  </a>
+                  <a class="btn btn-outline-primary" href="{{ url_for('admin.send_items') }}">
+                    <i class="bi bi-printer me-2"></i>Send Items
+                  </a>
+                  <a class="btn btn-outline-info" href="{{ url_for('admin.transfer_equipment') }}">
+                    <i class="bi bi-arrow-left-right me-2"></i>Transfer Equipment
+                  </a>
+                  <a class="btn btn-outline-warning" href="{{ url_for('admin.add_maintenance') }}">
+                    <i class="bi bi-tools me-2"></i>Add Maintenance
                   </a>
                 </div>
-                <div class="card-body">
-                  {% if stations %}
-                  <div class="row">
-                    {% for s in stations %}
-                    <div class="col-xl-4 col-lg-6 mb-4">
-                      <div class="card station-card h-100">
-                        <div class="card-body">
-                          <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title text-dark mb-0">{{ s.name }}</h6>
-                            <span class="badge bg-success">
-                              <span class="status-indicator status-active"></span>Active
-                            </span>
-                          </div>
-                          <p class="card-text text-muted small mb-3">
-                            <i class="bi bi-geo-alt me-1 text-primary"></i>{{ s.location }}
-                          </p>
-                          <div class="d-flex justify-content-between align-items-center text-muted small">
-                            <span>
-                              <i class="bi bi-calendar me-1"></i>ID: {{ s.id }}
-                            </span>
-                            <span>
-                              <i class="bi bi-laptop me-1"></i>Ready for devices
-                            </span>
-                          </div>
-                        </div>
-                        <div class="card-footer bg-transparent border-top pt-2 pb-2">
-    <div class="btn-group-compact mb-2">
-        <a href="{{ url_for('admin.view_station', station_id=s.id) }}" class="btn btn-outline-primary station-btn" title="Open Station">
-          <i class="bi bi-folder2-open"></i> Open
-        </a>
-        <a href="{{ url_for('admin.edit_station', station_id=s.id) }}" class="btn btn-outline-warning station-btn" title="Edit Station">
-            <i class="bi bi-pencil"></i> Edit
-        </a>
-        
-    </div>
-    <form action="{{ url_for('admin.delete_station', station_id=s.id) }}" method="POST">
-        <button type="submit" class="btn btn-outline-danger station-btn w-100" onclick="return confirm('Delete {{ s.name }}?')">
-            <i class="bi bi-trash"></i> Delete
-        </button>
-    </form>
-</div>
+              </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="row mb-4">
+              <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card stat-card computers h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h2 class="card-title text-primary">{{ stations|length }}</h2>
+                        <p class="card-text text-muted">IT Stations</p>
+                        <small class="text-success">
+                          <i class="bi bi-check-circle me-1"></i>All Active
+                        </small>
+                      </div>
+                      <div class="bg-primary bg-opacity-10 p-2 rounded">
+                        <i class="bi bi-pc-display-horizontal text-primary"></i>
                       </div>
                     </div>
-                    {% endfor %}
                   </div>
-                  {% else %}
-                  <div class="text-center py-5">
-                    <i class="bi bi-inboxes display-1 text-muted"></i>
-                    <h5 class="mt-3 text-muted">No IT Stations Found</h5>
-                    <p class="text-muted mb-4">Get started by adding your first station to organize your IT equipment</p>
-                    <a class="btn btn-najmi-primary btn-lg" href="{{ url_for('admin.add_station') }}">
-                      <i class="bi bi-plus-circle me-2"></i>Add First Station
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card stat-card network h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h2 class="card-title text-success">{{ total_devices }}</h2>
+                        <p class="card-text text-muted">Total Devices</p>
+                        <small class="text-success">
+                          <i class="bi bi-check-circle me-1"></i>{{ computers_count }} computers, {{ printers_count }} printers, {{ routers_count }} routers
+                        </small>
+                      </div>
+                      <div class="bg-success bg-opacity-10 p-2 rounded">
+                        <i class="bi bi-wifi text-success"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card stat-card maintenance h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h2 class="card-title text-warning">0</h2>
+                        <p class="card-text text-muted">System Status</p>
+                        <small class="text-success">
+                          <i class="bi bi-check-circle me-1"></i>All Systems Operational
+                        </small>
+                      </div>
+                      <div class="bg-warning bg-opacity-10 p-2 rounded">
+                        <i class="bi bi-activity text-warning"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6 mb-3">
+                <div class="card stat-card software h-100">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h2 class="card-title text-info">100%</h2>
+                        <p class="card-text text-muted">Inventory Coverage</p>
+                        <small class="text-success">
+                          <i class="bi bi-check-circle me-1"></i>Complete
+                        </small>
+                      </div>
+                      <div class="bg-info bg-opacity-10 p-2 rounded">
+                        <i class="bi bi-clipboard-check text-info"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scrollable Stations Area -->
+          <div class="stations-scrollable-area">
+            <div class="row">
+              <!-- Stations Grid -->
+              <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 text-dark">
+                      <i class="bi bi-pc-display me-2 text-primary"></i>IT Stations ({{ stations|length }})
+                    </h5>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.add_station') }}">
+                      <i class="bi bi-plus-circle me-1"></i>Add Station
                     </a>
                   </div>
-                  {% endif %}
+                  <div class="card-body">
+                    {% if stations %}
+                    <div class="row">
+                      {% for s in stations %}
+                      <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                        <!-- BLUE STATION CARD -->
+                        <div class="station-card">
+                          <div class="station-header">
+                            <div class="station-name">
+                              <span>{{ s.name }}</span>
+                              <span class="station-status">
+                                <span class="status-dot"></span>Active
+                              </span>
+                            </div>
+                            <div class="station-location">
+                              <i class="bi bi-geo-alt"></i>{{ s.location }}
+                            </div>
+                          </div>
+                          <div class="station-body">
+                            <div class="station-info">
+                              <div class="station-id">
+                                <i class="bi bi-hash"></i>ID: {{ s.id }}
+                              </div>
+                              <div class="station-ready">
+                                <i class="bi bi-laptop"></i>Ready
+                              </div>
+                            </div>
+                            <div class="station-actions">
+                              <a href="{{ url_for('admin.view_station', station_id=s.id) }}" class="station-btn view">
+                                <i class="bi bi-eye"></i> View
+                              </a>
+                              <a href="{{ url_for('admin.edit_station', station_id=s.id) }}" class="station-btn edit">
+                                <i class="bi bi-pencil"></i> Edit
+                              </a>
+                              <form action="{{ url_for('admin.delete_station', station_id=s.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete {{ s.name }}?');">
+                                <button type="submit" class="station-btn delete">
+                                  <i class="bi bi-trash"></i> Delete
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                      <i class="bi bi-inboxes display-1 text-muted"></i>
+                      <h5 class="mt-3 text-muted">No IT Stations Found</h5>
+                      <p class="text-muted mb-4">Get started by adding your first station to organize your IT equipment</p>
+                      <a class="btn btn-najmi-primary btn-lg" href="{{ url_for('admin.add_station') }}">
+                        <i class="bi bi-plus-circle me-2"></i>Add First Station
+                      </a>
+                    </div>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
@@ -432,5 +849,26 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleTheme() {
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle.checked) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedTheme = localStorage.getItem('theme');
+      const themeToggle = document.getElementById('themeToggle');
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (themeToggle) themeToggle.checked = true;
+      }
+    });
+  </script>
 </body>
 </html>

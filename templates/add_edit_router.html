@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                {% if action == 'Edit' %}Update{% else %}Add{% endif %} Router
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Router Name *</label>
+                        <input type="text" class="form-control" name="router_name" 
+                               value="{{ router.name if router else '' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Station Location *</label>
+                        <select class="form-select" name="station_id" required>
+                            <option value="">Select Station</option>
+                            {% for station in stations %}
+                            <option value="{{ station.id }}" 
+                                {% if router and router.station_id == station.id %}selected{% endif %}>
+                                {{ station.name }} - {{ station.location }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Brand</label>
+                        <input type="text" class="form-control" name="brand" 
+                               value="{{ router.brand if router else '' }}" 
+                               placeholder="e.g., Cisco, TP-Link, MikroTik">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Model</label>
+                        <input type="text" class="form-control" name="model" 
+                               value="{{ router.model if router else '' }}" 
+                               placeholder="e.g., WR840N, Archer C7">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">IP Address</label>
+                        <input type="text" class="form-control" name="ip_address" 
+                               value="{{ router.ip_address if router else '' }}" 
+                               placeholder="e.g., 192.168.1.1">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Serial Number</label>
+                        <input type="text" class="form-control" name="serial_number" 
+                               value="{{ router.serial_number if router else '' }}">
+                    </div>
+                </div>
+
+                <!-- ADD USERNAME AND PASSWORD FIELDS -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Admin Username</label>
+                        <input type="text" class="form-control" name="username" 
+                               value="{{ router.username if router else 'admin' }}" 
+                               placeholder="Default: admin">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Admin Password</label>
+                        <input type="password" class="form-control" name="password" 
+                               value="{{ router.password if router else '' }}" 
+                               placeholder="Router admin password">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="active" {% if router and router.status=='active' %}selected{% endif %}>Active</option>
+                            <option value="maintenance" {% if router and router.status=='maintenance' %}selected{% endif %}>Maintenance</option>
+                            <option value="offline" {% if router and router.status=='offline' %}selected{% endif %}>Offline</option>
+                            <option value="backup" {% if router and router.status=='backup' %}selected{% endif %}>Backup</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Purchase Date</label>
+                        <input type="date" class="form-control" name="purchase_date" 
+                               value="{{ router.purchase_date if router and router.purchase_date else '' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" name="notes" rows="3" 
+                              placeholder="Any additional information about the router">{{ router.notes if router else '' }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    {% if action == 'Edit' %}Update{% else %}Add{% endif %} Router
+                </button>
+                <a href="{{ url_for('admin.view_routers') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Antivirus Management - Najmi International{% endblock %}
+
+{% block content %}
+<style>
+    /* Remove page scroll, keep only table scroll */
+    body, html {
+        overflow: hidden;
+    }
+    
+    .container-fluid {
+        height: calc(100vh - 120px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card-body .table-responsive {
+        flex: 1;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-shield-alt"></i> Antivirus Management</h1>
+        <div>
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('admin.antivirus_add') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Antivirus
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Filter Section -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card history-card">
+                <div class="card-body py-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted mb-1">Search</label>
+                            <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search by name, vendor, license type...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted mb-1">Filter by Status</label>
+                            <select class="form-select form-select-sm" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expiring">Expiring Soon</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                                <i class="fas fa-redo me-1"></i>Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card flex-grow-1 d-flex flex-column">
+        <div class="card-header">
+            <h5 class="mb-0">Antivirus Software</h5>
+        </div>
+        <div class="card-body d-flex flex-column" style="min-height: 0;">
+            <div class="table-responsive">
+                <table class="table table-striped" id="antivirusTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Activation Date</th>
+                            <th>Expiry Date</th>
+                            <th>License Type</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for av in antivirus_list %}
+                        <tr class="antivirus-row" 
+                            data-search="{{ av.name }} {{ av.vendor or '' }} {{ av.license_type or '' }} {{ av.assigned_count }}"
+                            data-status="{% if av.expiry_date and av.expiry_date < today %}expired{% elif av.expiry_date and (av.expiry_date - today).days <= 60 %}expiring{% else %}active{% endif %}">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ av.name }}</td>
+                            <td>{{ av.activation_date or 'N/A' }}</td>
+                            <td>
+                                {% if av.expiry_date %}
+                                    {{ av.expiry_date }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>{{ av.license_type or 'N/A' }}</td>
+                            <td>
+                                {% if av.assigned_count > 0 %}
+                                    {{ av.assigned_count }} device(s)
+                                {% else %}
+                                    Not assigned
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if av.expiry_date and av.expiry_date < today %}
+                                    <span class="badge bg-danger">Expired</span>
+                                {% elif av.expiry_date and (av.expiry_date - today).days <= 60 %}
+                                    <span class="badge bg-warning">Expiring Soon</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin.view_antivirus', antivirus_id=av.id) }}" 
+                                       class="btn btn-sm btn-info" title="View">
+                                        View
+                                    </a>
+                                    <a href="{{ url_for('admin.edit_antivirus', antivirus_id=av.id) }}" 
+                                       class="btn btn-sm btn-warning" title="Edit">
+                                        Edit
+                                    </a>
+                                    <form action="{{ url_for('admin.delete_antivirus', antivirus_id=av.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Delete" 
+                                                onclick="return confirm('Delete this antivirus?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Results Count -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted" id="resultsCount">
+                    Showing {{ antivirus_list|length }} of {{ antivirus_list|length }} antivirus software
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .history-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+</style>
+
+<script>
+    function filterTable() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        const rows = document.querySelectorAll('#antivirusTable tbody .antivirus-row');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const searchData = row.getAttribute('data-search').toLowerCase();
+            
+            let showRow = true;
+            
+            // Status filter
+            if (statusFilter !== 'all' && status !== statusFilter) {
+                showRow = false;
+            }
+            
+            // Search filter
+            if (searchTerm && !searchData.includes(searchTerm)) {
+                showRow = false;
+            }
+            
+            if (showRow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('resultsCount').textContent = `Showing ${visibleCount} of ${rows.length} antivirus software`;
+    }
+
+    function clearFilters() {
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('searchInput').value = '';
+        filterTable();
+    }
+
+    // Initialize filters
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+        
+        // Remove DataTable initialization since we're using custom filtering
+        if (typeof $.fn.DataTable !== 'undefined') {
+            $('#antivirusTable').DataTable().destroy();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Add Antivirus - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-shield-check me-2"></i>Add Antivirus
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Computer Selection Section -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Station *</label>
+                                <select class="form-select" name="station_id" required id="stationSelect">
+                                    <option value="">Select Station</option>
+                                    {% for station in stations %}
+                                    <option value="{{ station.id }}">
+                                        {{ station.name }} - {{ station.location }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Computer *</label>
+                                <select class="form-select" name="equipment_id" required id="computerSelect">
+                                    <option value="">Select a station first</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Antivirus Details Section -->
+                        <div class="border-top pt-4">
+                            <h5 class="mb-4">Antivirus Details</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Antivirus Name *</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Version</label>
+                                    <input type="text" class="form-control" name="version">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Vendor</label>
+                                    <input type="text" class="form-control" name="vendor">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">License Type</label>
+                                    <select class="form-select" name="license_type">
+                                        <option value="">Select License Type</option>
+                                        <option value="Annual">Annual</option>
+                                        <option value="Perpetual">Perpetual</option>
+                                        <option value="Subscription">Subscription</option>
+                                        <option value="Trial">Trial</option>
+                                        <option value="Free">Free</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Activation Key</label>
+                                    <input type="text" class="form-control" name="activation_key">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Activation Date</label>
+                                    <input type="date" class="form-control" name="activation_date">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Expiry Date</label>
+                                    <input type="date" class="form-control" name="expiry_date">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Add Antivirus
+                            </button>
+                            <a href="{{ url_for('admin.antivirus_list') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const computers = {{ computers|tojson }};
+
+    // Function to filter computers by station
+    function filterComputersByStation(stationId) {
+        const computerSelect = document.getElementById('computerSelect');
+        computerSelect.innerHTML = '<option value="">Select a computer</option>';
+        
+        const filteredComputers = computers.filter(computer => {
+            return parseInt(computer.station_id) === parseInt(stationId);
+        });
+
+        filteredComputers.forEach(computer => {
+            const option = document.createElement('option');
+            option.value = computer.id;
+            let displayText = computer.name;
+            if (computer.assigned_user) {
+                displayText += ` (${computer.assigned_user})`;
+            }
+            if (computer.model) {
+                displayText += ` - ${computer.model}`;
+            }
+            option.textContent = displayText;
+            computerSelect.appendChild(option);
+        });
+
+        if (filteredComputers.length === 0) {
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "No computers found in this station";
+            option.disabled = true;
+            computerSelect.appendChild(option);
+        }
+    }
+
+    document.getElementById('stationSelect').addEventListener('change', function() {
+        const stationId = this.value;
+        if (stationId) {
+            filterComputersByStation(stationId);
+        } else {
+            const computerSelect = document.getElementById('computerSelect');
+            computerSelect.innerHTML = '<option value="">Select a station first</option>';
+        }
+    });
+</script>
+{% endblock %}

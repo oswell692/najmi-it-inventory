@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAJMI INTERNATIONAL LTD - Logo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .logo-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Circular text paths */
+        .text-path {
+            fill: none;
+            stroke: none;
+        }
+        .top-text, .bottom-text {
+            font-size: 22px;
+            font-weight: bold;
+            fill: #0056a9; /* Blue color */
+            text-anchor: middle;
+            letter-spacing: 1px;
+        }
+        .bottom-text {
+            font-size: 18px;
+            font-style: italic;
+        }
+        /* Clip path for circular map */
+        .map-clip {
+            clip-path: circle(100px at 200px 200px);
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <svg viewBox="0 0 400 400" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background circle -->
+            <circle cx="200" cy="200" r="180" fill="#f0f8ff" stroke="#d1e7ff" stroke-width="2" />
+            
+            <!-- Text paths -->
+            <defs>
+                <path id="topCircle" d="M 100,200 A 100,100 0 1,1 300,200" />
+                <path id="bottomCircle" d="M 300,200 A 100,100 0 1,1 100,200" />
+                <!-- Circular clip path for the map -->
+                <clipPath id="circleClip">
+                    <circle cx="200" cy="200" r="100" />
+                </clipPath>
+            </defs>
+            
+            <!-- Top text -->
+            <text class="top-text">
+                <textPath href="#topCircle" startOffset="50%">
+                    NAJMI INTERNATIONAL LTD
+                </textPath>
+            </text>
+            
+            <!-- Actual World Map (Blue-themed) -->
+            <!-- Using a free, open-source world map image -->
+            <image href="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/500px-Equirectangular_projection_SW.jpg" 
+                   x="100" y="100" width="200" height="200" 
+                   clip-path="url(#circleClip)"
+                   opacity="0.9"/>
+            
+            <!-- Map border -->
+            <circle cx="200" cy="200" r="100" fill="none" stroke="#0056a9" stroke-width="3" />
+            
+            <!-- Bottom text -->
+            <text class="bottom-text">
+                <textPath href="#bottomCircle" startOffset="50%">
+                    "On Time Logistics Services"
+                </textPath>
+            </text>
+        </svg>
+    </div>
+    
+    <script>
+        // Fallback in case the Wikimedia image doesn't load
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapImage = document.querySelector('image');
+            mapImage.addEventListener('error', function() {
+                // Alternative world map image
+                this.setAttribute('href', 'https://cdn.pixabay.com/photo/2018/08/15/13/10/world-map-3608021_1280.jpg');
+            });
+        });
+    </script>
+</body>
+</html>

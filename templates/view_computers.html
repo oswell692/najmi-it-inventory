@@ -1,11 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    /* Remove page scroll, keep only table scroll */
+    body, html {
+        overflow: hidden;
+    }
+    
+    .container.mt-4 {
+        height: calc(100vh - 120px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .table-responsive {
+        flex: 1;
+        overflow-y: auto;
+        margin-top: 15px;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Computers List</h3>
+        <h3>All Computers</h3>
         <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            <i class="bi bi-arrow-left me-2"></i>Dashboard
         </a>
     </div>
 

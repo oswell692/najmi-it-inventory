@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Assign Antivirus - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-desktop"></i> Assign Antivirus to Equipment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Antivirus Details:</h6>
+                        <p><strong>Name:</strong> {{ antivirus.name }}</p>
+                        <p><strong>Version:</strong> {{ antivirus.version or 'N/A' }}</p>
+                        <p><strong>Vendor:</strong> {{ antivirus.vendor or 'N/A' }}</p>
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="installed_date" class="form-label">Installation Date</label>
+                            <input type="date" class="form-control" id="installed_date" name="installed_date" 
+                                   value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Select Equipment to Assign</label>
+                            <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                                {% for item in equipment %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" 
+                                           value="{{ item.id }}" id="equipment{{ item.id }}">
+                                    <label class="form-check-label" for="equipment{{ item.id }}">
+                                        <strong>{{ item.name }}</strong>
+                                        {% if item.assigned_user %} - {{ item.assigned_user }}{% endif %}
+                                        {% if item.model %} ({{ item.model }}){% endif %}
+                                        {% if item.processor %} - {{ item.processor }}{% endif %}
+                                    </label>
+                                </div>
+                                {% else %}
+                                <p class="text-muted">No available equipment to assign.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.antivirus_list') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary" 
+                                    {% if not equipment %}disabled{% endif %}>
+                                Assign to Selected Equipment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Send Record - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Send Record #{{ send_record.id }}
+                        <span class="badge {% if send_record.status == 'sent' %}bg-warning{% else %}bg-success{% endif %} ms-2">
+                            {{ 'In Transit' if send_record.status == 'sent' else 'Received' }}
+                        </span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="editSendForm">
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">Transfer Information</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">From Station</label>
+                                    <input type="text" class="form-control" value="{{ send_record.from_station_name }}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">To Station</label>
+                                    <input type="text" class="form-control" value="{{ send_record.to_station_name }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Send Details -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">Send Details</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Sent By *</label>
+                                    <input type="text" class="form-control" name="sent_by" 
+                                           value="{{ send_record.sent_by }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Send Date *</label>
+                                    <input type="date" class="form-control" name="send_date" 
+                                           value="{{ send_record.send_date.strftime('%Y-%m-%d') }}" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Expected Delivery Date</label>
+                                    <input type="date" class="form-control" name="expected_delivery_date" 
+                                           value="{% if send_record.expected_delivery_date %}{{ send_record.expected_delivery_date.strftime('%Y-%m-%d') }}{% endif %}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ 'In Transit' if send_record.status == 'sent' else 'Received' }}" readonly>
+                                    <small class="text-muted">Note: Status can only be changed via "Mark Received" button</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea class="form-control" name="notes" rows="2">{{ send_record.notes or '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Sent Items (Editable if in transit) -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3 d-flex justify-content-between align-items-center">
+                                <span>Sent Items</span>
+                                {% if send_record.status == 'sent' %}
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addNewItem()">
+                                    <i class="fas fa-plus me-1"></i>Add Item
+                                </button>
+                                {% endif %}
+                            </h6>
+                            
+                            {% if send_items %}
+                            <div id="itemsContainer">
+                                {% for item in send_items %}
+                                <div class="item-row border-bottom pb-3 mb-3">
+                                    <input type="hidden" name="item_ids[]" value="{{ item.id }}">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Item Name</label>
+                                            <input type="text" class="form-control" name="item_names[]" 
+                                                   value="{{ item.item_name }}" 
+                                                   {% if send_record.status == 'received' %}readonly{% endif %} required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Quantity</label>
+                                            <input type="number" class="form-control" name="item_quantities[]" 
+                                                   value="{{ item.quantity }}" min="1"
+                                                   {% if send_record.status == 'received' %}readonly{% endif %} required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Condition</label>
+                                            <input type="text" class="form-control" name="item_conditions[]" 
+                                                   value="{{ item.condition }}"
+                                                   {% if send_record.status == 'received' %}readonly{% endif %}>
+                                        </div>
+                                        {% if send_record.status == 'sent' %}
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                                                    onclick="removeItem(this)">
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div id="itemsContainer">
+                                <p class="text-muted" id="noItemsMessage">No items added yet.</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if send_record.status == 'received' %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Items cannot be edited because this shipment has already been received.
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <a href="{{ url_for('admin.send_items_history') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            {% if send_record.status == 'sent' %}
+                            <a href="javascript:void(0)" class="btn btn-outline-success ms-auto"
+                               onclick="markAsReceived({{ send_record.id }})">
+                                <i class="fas fa-check me-2"></i>Mark as Received
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add new item row
+    function addNewItem() {
+        const itemsContainer = document.getElementById('itemsContainer');
+        const noItemsMessage = document.getElementById('noItemsMessage');
+        
+        if (noItemsMessage) {
+            noItemsMessage.style.display = 'none';
+        }
+        
+        const newItemHtml = `
+            <div class="item-row border-bottom pb-3 mb-3">
+                <input type="hidden" name="item_ids[]" value="">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" class="form-control" name="item_names[]" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" name="item_quantities[]" value="1" min="1" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Condition</label>
+                        <input type="text" class="form-control" name="item_conditions[]" placeholder="e.g., Good, New, Used">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeItem(this)">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        itemsContainer.insertAdjacentHTML('beforeend', newItemHtml);
+    }
+    
+    // Remove item row
+    function removeItem(button) {
+        const itemRow = button.closest('.item-row');
+        itemRow.remove();
+        
+        // Show "no items" message if all items are removed
+        const itemsContainer = document.getElementById('itemsContainer');
+        const noItemsMessage = document.getElementById('noItemsMessage');
+        const remainingItems = itemsContainer.querySelectorAll('.item-row');
+        
+        if (remainingItems.length === 0 && noItemsMessage) {
+            noItemsMessage.style.display = 'block';
+        }
+    }
+    
+    // Mark as received function
+    function markAsReceived(sendId) {
+        if (confirm('Mark this shipment as received? This will change the status to "Received" and cannot be undone.')) {
+            window.location.href = `/admin/mark_items_received/${sendId}`;
+        }
+    }
+    
+    // Form validation
+    document.getElementById('editSendForm').addEventListener('submit', function(e) {
+        const items = document.querySelectorAll('input[name="item_names[]"]');
+        if (items.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one item.');
+            return false;
+        }
+        
+        // Validate each item
+        let isValid = true;
+        items.forEach((input, index) => {
+            if (!input.value.trim()) {
+                isValid = false;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all item names.');
+            return false;
+        }
+        
+        return true;
+    });
+</script>
+
+<style>
+    .item-row {
+        transition: all 0.3s ease;
+    }
+    .item-row:hover {
+        background-color: #f8f9fa;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-left: -10px;
+        margin-right: -10px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}

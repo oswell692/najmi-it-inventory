@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-3">
+        <a href="{{ url_for('admin.view_routers') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Routers
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ router.name }} - Router Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Router Name:</th>
+                            <td>{{ router.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Brand/Model:</th>
+                            <td>
+                                {% if router.brand or router.model %}
+                                {{ router.brand }} {{ router.model }}
+                                {% else %}
+                                <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>IP Address:</th>
+                            <td>
+                                {% if router.ip_address %}
+                                <code>{{ router.ip_address }}</code>
+                                {% else %}
+                                <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Serial Number:</th>
+                            <td>{{ router.serial_number or 'Not specified' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Admin Username:</th>
+                            <td>{{ router.username or 'admin' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Admin Password:</th>
+                            <td>
+                                {% if router.password %}
+                                <code id="passwordDisplay">••••••••</code>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" 
+                                        onclick="togglePassword()" id="passwordToggle">Show</button>
+                                <span id="passwordValue" class="d-none">{{ router.password }}</span>
+                                {% else %}
+                                <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Status:</th>
+                            <td>
+                                {% if router.status == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                {% elif router.status == 'maintenance' %}
+                                    <span class="badge bg-warning">Maintenance</span>
+                                {% elif router.status == 'offline' %}
+                                    <span class="badge bg-danger">Offline</span>
+                                {% elif router.status == 'backup' %}
+                                    <span class="badge bg-secondary">Backup</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">{{ router.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Station:</th>
+                            <td>
+                                {% if router.station_name %}
+                                {{ router.station_name }}
+                                {% if router.location %}
+                                <br><small class="text-muted">{{ router.location }}</small>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Purchase Date:</th>
+                            <td>{{ router.purchase_date.strftime('%Y-%m-%d') if router.purchase_date else 'Unknown' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            {% if router.notes %}
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6>Notes:</h6>
+                    <div class="border rounded p-3 bg-light">
+                        {{ router.notes|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('admin.edit_router', router_id=router.id) }}" class="btn btn-warning">
+                <i class="bi bi-pencil me-2"></i>Edit Router
+            </a>
+            <form action="{{ url_for('admin.delete_router', router_id=router.id) }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this router?')">
+                    <i class="bi bi-trash me-2"></i>Delete Router
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const passwordDisplay = document.getElementById('passwordDisplay');
+    const passwordValue = document.getElementById('passwordValue');
+    const passwordToggle = document.getElementById('passwordToggle');
+    
+    if (passwordDisplay.textContent === '••••••••') {
+        passwordDisplay.textContent = passwordValue.textContent;
+        passwordToggle.textContent = 'Hide';
+        passwordToggle.classList.remove('btn-outline-secondary');
+        passwordToggle.classList.add('btn-outline-danger');
+    } else {
+        passwordDisplay.textContent = '••••••••';
+        passwordToggle.textContent = 'Show';
+        passwordToggle.classList.remove('btn-outline-danger');
+        passwordToggle.classList.add('btn-outline-secondary');
+    }
+}
+</script>
+
+<style>
+    .table-borderless th {
+        font-weight: 600;
+        color: #495057;
+    }
+    .table-borderless td {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}

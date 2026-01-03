@@ -552,3 +552,156 @@
     </script>
 </body>
 </html>
+
+
+
+@admin_bp.route('/admin/station/<int:station_id>/add_computer', methods=['GET', 'POST'])
+def add_computer(station_id):
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        # Handle file uploads
+        computer_images = request.files.getlist('computer_images')
+        image_paths = []
+        
+        for image in computer_images:
+            if image and image.filename:
+                # Secure the filename and save the image
+                filename = secure_filename(image.filename)
+                # Create unique filename to avoid collisions
+                unique_filename = f"{uuid.uuid4()}_{filename}"
+                # Create uploads directory if it doesn't exist
+                upload_dir = os.path.join('static', 'uploads', 'computers')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                image_path = os.path.join(upload_dir, unique_filename)
+                image.save(image_path)
+                # Store relative path for web access
+                relative_path = f"uploads/computers/{unique_filename}"
+                image_paths.append(relative_path)
+        
+        # Convert list of image paths to JSON string for database storage
+        images_json = json.dumps(image_paths) if image_paths else None
+        
+        data = (
+            station_id,
+            'computer',
+            request.form.get('computer_name'),
+            request.form.get('assigned_user'),
+            request.form.get('status', 'active'),
+            request.form.get('year_purchased'),
+            request.form.get('processor'),
+            request.form.get('installed_ram'),
+            request.form.get('device_id'),
+            request.form.get('product_id'),
+            request.form.get('serial_number'),
+            request.form.get('encryption_type'),
+            request.form.get('encryption_key'),
+            request.form.get('bios_password'),
+            request.form.get('system_type'),
+            request.form.get('pen_touch'),
+            request.form.get('windows'),
+            request.form.get('notes'),
+            request.form.get('last_serviced'),
+            request.form.get('history'),
+            images_json  # Add images to database
+        )
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO equipment
+            (station_id, type, name, assigned_user, status, year_purchased, processor, ram, device_id, product_id, serial_number, encryption_type, encryption_key, bios_password, system_type, pen_touch, windows, notes, last_serviced, history, images)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, data)
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Computer added successfully.", "success")
+        return redirect(url_for('admin.view_station', station_id=station_id))
+
+    return render_template('add_edit_equipment.html', kind='computer', action='Add', station_id=station_id, item=None)
+
+    @admin_bp.route('/admin/station/<int:station_id>/add_printer', methods=['GET', 'POST'])
+def add_printer(station_id):
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        # <-- changed: data no longer includes 'type'; match printers table columns
+        data = (
+            station_id,
+            request.form.get('printer_name'),
+            request.form.get('serial_number'),
+            request.form.get('year_purchased'),
+            request.form.get('status'),
+            request.form.get('notes')
+        )
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # <-- changed: insert into printers table
+        cur.execute("""
+            INSERT INTO printers
+            (station_id, name, serial_number, year_purchased, status, notes)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, data)
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Printer added successfully.", "success")
+        return redirect(url_for('admin.view_printers'))
+
+    return render_template('add_edit_equipment.html', kind='printer', action='Add', station_id=station_id, item=None)
+
+    @admin_bp.route('/admin/add_router', methods=['GET', 'POST'])
+def add_router():
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.login'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, location FROM stations ORDER BY name")
+    stations = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    if request.method == 'POST':
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute("""
+                INSERT INTO routers 
+                (station_id, name, brand, model, ip_address, serial_number, 
+                 username, password, status, purchase_date, notes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                request.form.get('station_id'),
+                request.form.get('router_name'),
+                request.form.get('brand'),
+                request.form.get('model'),
+                request.form.get('ip_address'),
+                request.form.get('serial_number'),
+                request.form.get('username'),
+                request.form.get('password'),  # Add password field
+                request.form.get('status', 'active'),
+                request.form.get('purchase_date'),
+                request.form.get('notes')
+            ))
+            
+            conn.commit()
+            flash("Router added successfully!", "success")
+            return redirect(url_for('admin.view_routers'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error adding router: {str(e)}", "danger")
+        finally:
+            cur.close()
+            conn.close()
+
+    return render_template('add_edit_router.html', action='Add', stations=stations)

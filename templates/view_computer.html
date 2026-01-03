@@ -30,6 +30,37 @@
         {% endif %}
     </p>
 
+    <!-- Computer Images Section -->
+    {% if computer.images and computer.images|length > 0 %}
+    <div class="mb-4">
+        <h5>Computer Images</h5>
+        <div class="row">
+            {% for image_path in computer.images %}
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card">
+                    <!-- Use direct path instead of url_for -->
+                    <img src="/static/{{ image_path }}" 
+                         class="card-img-top" 
+                         alt="Computer image {{ loop.index }}"
+                         style="height: 200px; object-fit: cover; cursor: pointer;"
+                         onclick="openImageModal('/static/{{ image_path }}')">
+                    <div class="card-body text-center p-2">
+                        <small class="text-muted">Image {{ loop.index }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="mb-4">
+        <h5>Computer Images</h5>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No images available for this computer.
+        </div>
+    </div>
+    {% endif %}
+
     <table class="table table-bordered mt-3">
         <tbody>
             <tr><th>Year Purchased</th><td>{{ computer.year_purchased }}</td></tr>
@@ -37,6 +68,10 @@
             <tr><th>Installed RAM</th><td>{{ computer.ram }}</td></tr>
             <tr><th>Device ID</th><td>{{ computer.device_id }}</td></tr>
             <tr><th>Product ID</th><td>{{ computer.product_id }}</td></tr>
+            <tr><th>Serial Number</th><td>{{ computer.serial_number or 'Not specified' }}</td></tr>
+            <tr><th>Encryption Type</th><td>{{ computer.encryption_type or 'Not specified' }}</td></tr>
+            <tr><th>Encryption Key</th><td>{{ computer.encryption_key or 'Not set' }}</td></tr>
+            <tr><th>BIOS Password</th><td>{{ computer.bios_password or 'Not set' }}</td></tr>
             <tr><th>System Type</th><td>{{ computer.system_type }}</td></tr>
             <tr><th>Pen & Touch</th><td>{{ computer.pen_touch }}</td></tr>
             <tr><th>Windows Installed</th><td>{{ computer.windows }}</td></tr>
@@ -51,7 +86,50 @@
         <form action="{{ url_for('admin.delete_equipment', equipment_id=computer.id) }}" method="POST" style="display:inline;">
             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
         </form>
-        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back</a>
+        <a href="{{ url_for('admin.view_computers') }}" class="btn btn-secondary">Back</a>
     </div>
 </div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Computer Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Enlarged computer image" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card-img-top:hover {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+</style>
+
+<script>
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    imageModal.show();
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('imageModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+});
+</script>
 {% endblock %}

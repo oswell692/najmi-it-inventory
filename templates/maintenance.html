@@ -1,64 +1,152 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-  <title>Maintenance Records - Najmi International</title>
-  <style>
-    :root {
-      --najmi-primary: #1a365d;
-      --najmi-secondary: #2d74da;
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Remove page scroll, keep only table scroll */
+    body, html {
+        overflow: hidden;
     }
-    .maintenance-card {
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
+    
+    .container-fluid {
+        height: calc(100vh - 70px); /* Reduced top space for longer table */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
-    .maintenance-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+    
+    /* Make the last card (the table) take more space */
+    .row:last-child {
+        flex: 1;
+        min-height: 0;
+        margin-top: -10px; /* Pull table up closer to stats */
     }
-    .btn-najmi-primary {
-      background: linear-gradient(135deg, var(--najmi-primary), var(--najmi-secondary));
-      border: none;
-      color: white;
-      border-radius: 8px;
-      font-weight: 600;
+    
+    .row:last-child .col-12 {
+        height: 100%;
     }
-    .status-resolved { border-left: 4px solid #38a169; }
-    .status-pending { border-left: 4px solid #dd6b20; }
-    .status-in-progress { border-left: 4px solid #3182ce; }
-  </style>
-</head>
-<body>
-  <div class="container-fluid">
+    
+    .row:last-child .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .row:last-child .card-header {
+        display: none; /* Hide the card header with "Maintenance History" */
+    }
+    
+    .row:last-child .card-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 0; /* Remove padding to maximize table space */
+    }
+    
+    .row:last-child .table-responsive {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    /* Make table header stay fixed while table body scrolls */
+    .row:last-child .table-responsive {
+        position: relative;
+    }
+    
+    .row:last-child table thead {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .row:last-child table tbody {
+        position: relative;
+    }
+    
+    /* Add number column styling */
+    .record-number {
+        font-weight: 600;
+        color: #495057;
+        text-align: center;
+        min-width: 50px;
+    }
+    
+    /* Compact table styling */
+    .table {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table td, .table th {
+        padding: 10px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table thead th {
+        position: sticky;
+        top: 0;
+    }
+    
+    .btn-group .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    /* Adjust spacing for header section */
+    .row:first-child {
+        margin-bottom: 15px; /* Reduce space below header */
+    }
+    
+    /* Stats cards compact styling */
+    .row:nth-child(2) {
+        margin-bottom: 15px; /* Reduce space below stats */
+    }
+    
+    .maintenance-card .card-body {
+        padding: 15px;
+    }
+    
+    /* Ensure table body starts right after header */
+    .table thead tr:first-child th {
+        border-top: none;
+    }
+</style>
+
+<div class="container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="row">
       <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center py-3">
+        <div class="d-flex justify-content-between align-items-center py-2"> <!-- Reduced padding -->
           <div>
-            <h2 class="mb-1 fw-bold text-dark">
-              <i class="bi bi-tools me-2"></i>Maintenance Records
+            <h2 class="mb-0 fw-bold" style="color: #000; font-size: 1.5rem;"> <!-- Smaller font -->
+              <i class="fas fa-tools me-2"></i>Maintenance Records
             </h2>
-            <p class="text-muted mb-0">Track and manage equipment maintenance history</p>
+            <p class="text-muted mb-0" style="font-size: 0.875rem;">Track and manage equipment maintenance history</p>
           </div>
           <div class="d-flex gap-2">
             <!-- Back to Dashboard Button -->
-            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left me-2"></i>Dashboard
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary btn-sm"> <!-- Smaller button -->
+              <i class="fas fa-arrow-left me-1"></i>Dashboard
             </a>
-            <!-- View Records Button (visible when viewing records) -->
-            {% if maintenance_records %}
-            <a href="#records-section" class="btn btn-outline-primary">
-              <i class="bi bi-list-check me-2"></i>View Records
-            </a>
-            {% endif %}
             <!-- Add Maintenance Button -->
-            <a href="{{ url_for('admin.add_maintenance') }}" class="btn btn-najmi-primary">
-              <i class="bi bi-plus-circle me-2"></i>Add Maintenance Record
+            <a href="{{ url_for('admin.add_maintenance') }}" class="btn btn-primary btn-sm"> <!-- Smaller button -->
+              <i class="fas fa-plus-circle me-1"></i>Add Maintenance 
             </a>
           </div>
         </div>
@@ -66,62 +154,62 @@
     </div>
 
     <!-- Stats Overview -->
-    <div class="row mb-4">
-      <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card maintenance-card">
-          <div class="card-body">
+    <div class="row">
+      <div class="col-xl-3 col-md-6 mb-2"> <!-- Reduced margin -->
+        <div class="card maintenance-card h-100">
+          <div class="card-body py-3"> <!-- Reduced padding -->
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h4 class="card-title text-primary">{{ total_records }}</h4>
-                <p class="card-text text-muted mb-0">Total Records</p>
+                <h4 class="card-title text-primary mb-0">{{ total_records }}</h4>
+                <p class="card-text text-muted mb-0" style="font-size: 0.875rem;">Total Records</p>
               </div>
-              <div class="bg-primary bg-opacity-10 p-3 rounded">
-                <i class="bi bi-clipboard-check text-primary" style="font-size: 1.5rem;"></i>
+              <div class="bg-primary bg-opacity-10 p-2 rounded"> <!-- Smaller icon container -->
+                <i class="fas fa-clipboard-check text-primary" style="font-size: 1.2rem;"></i>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card maintenance-card">
-          <div class="card-body">
+      <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card maintenance-card h-100">
+          <div class="card-body py-3">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h4 class="card-title text-success">{{ resolved_count }}</h4>
-                <p class="card-text text-muted mb-0">Resolved</p>
+                <h4 class="card-title text-success mb-0">{{ resolved_count }}</h4>
+                <p class="card-text text-muted mb-0" style="font-size: 0.875rem;">Resolved</p>
               </div>
-              <div class="bg-success bg-opacity-10 p-3 rounded">
-                <i class="bi bi-check-circle text-success" style="font-size: 1.5rem;"></i>
+              <div class="bg-success bg-opacity-10 p-2 rounded">
+                <i class="fas fa-check-circle text-success" style="font-size: 1.2rem;"></i>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card maintenance-card">
-          <div class="card-body">
+      <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card maintenance-card h-100">
+          <div class="card-body py-3">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h4 class="card-title text-warning">{{ pending_count }}</h4>
-                <p class="card-text text-muted mb-0">Pending</p>
+                <h4 class="card-title text-warning mb-0">{{ pending_count }}</h4>
+                <p class="card-text text-muted mb-0" style="font-size: 0.875rem;">Pending</p>
               </div>
-              <div class="bg-warning bg-opacity-10 p-3 rounded">
-                <i class="bi bi-clock text-warning" style="font-size: 1.5rem;"></i>
+              <div class="bg-warning bg-opacity-10 p-2 rounded">
+                <i class="fas fa-clock text-warning" style="font-size: 1.2rem;"></i>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card maintenance-card">
-          <div class="card-body">
+      <div class="col-xl-3 col-md-6 mb-2">
+        <div class="card maintenance-card h-100">
+          <div class="card-body py-3">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h4 class="card-title text-info">{{ in_progress_count }}</h4>
-                <p class="card-text text-muted mb-0">In Progress</p>
+                <h4 class="card-title text-info mb-0">{{ in_progress_count }}</h4>
+                <p class="card-text text-muted mb-0" style="font-size: 0.875rem;">In Progress</p>
               </div>
-              <div class="bg-info bg-opacity-10 p-3 rounded">
-                <i class="bi bi-gear text-info" style="font-size: 1.5rem;"></i>
+              <div class="bg-info bg-opacity-10 p-2 rounded">
+                <i class="fas fa-cog text-info" style="font-size: 1.2rem;"></i>
               </div>
             </div>
           </div>
@@ -133,26 +221,14 @@
     <div class="row">
       <div class="col-12">
         <div class="card maintenance-card" id="records-section">
-          <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0 text-dark">
-              <i class="bi bi-list-check me-2"></i>Maintenance History
-            </h5>
-            <div class="d-flex gap-2">
-              <!-- Quick action buttons in table header -->
-              <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-speedometer2 me-1"></i>Dashboard
-              </a>
-              <a href="{{ url_for('admin.add_maintenance') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-1"></i>Add New
-              </a>
-            </div>
-          </div>
+          <!-- REMOVED: Card header with "Maintenance History" title -->
           <div class="card-body">
             {% if maintenance_records %}
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead>
                   <tr>
+                    <th class="record-number">#</th>
                     <th>Device</th>
                     <th>Station</th>
                     <th>Issue Description</th>
@@ -160,85 +236,112 @@
                     <th>Date Reported</th>
                     <th>Date Resolved</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th style="min-width: 140px;">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for record in maintenance_records %}
                   <tr class="align-middle">
+                    <td class="record-number">{{ loop.index }}</td> <!-- Numbered records -->
                     <td>
                       <div class="d-flex align-items-center">
                         {% if record.device_type == 'computer' %}
-                        <i class="bi bi-laptop text-primary me-2"></i>
+                        <i class="fas fa-laptop text-primary me-2"></i>
                         {% else %}
-                        <i class="bi bi-printer text-success me-2"></i>
+                        <i class="fas fa-print text-success me-2"></i>
                         {% endif %}
                         <div>
-                          <strong>{{ record.device_name }}</strong>
+                          <strong style="font-size: 0.9rem;">{{ record.device_name }}</strong>
                           <br>
-                          <small class="text-muted">{{ record.device_type|title }}</small>
+                          <small class="text-muted" style="font-size: 0.8rem;">{{ record.device_type|title }}</small>
                         </div>
                       </div>
                     </td>
-                    <td>{{ record.station_name }}</td>
+                    <td style="font-size: 0.9rem;">{{ record.station_name }}</td>
                     <td>
-                      <span class="d-inline-block text-truncate" style="max-width: 200px;" 
+                      <span class="d-inline-block text-truncate" style="max-width: 180px; font-size: 0.9rem;" 
                             title="{{ record.issue_description }}">
                         {{ record.issue_description }}
                       </span>
                     </td>
-                    <td>{{ record.technician }}</td>
-                    <td>
-                      <small class="text-muted">{{ record.date_reported.strftime('%Y-%m-%d') }}</small>
+                    <td style="font-size: 0.9rem;">{{ record.technician }}</td>
+                    <td style="font-size: 0.9rem;">
+                      {{ record.date_reported.strftime('%Y-%m-%d') }}
                     </td>
-                    <td>
+                    <td style="font-size: 0.9rem;">
                       {% if record.date_resolved %}
-                      <small class="text-muted">{{ record.date_resolved.strftime('%Y-%m-%d') }}</small>
+                      {{ record.date_resolved.strftime('%Y-%m-%d') }}
                       {% else %}
                       <span class="badge bg-light text-muted">Not resolved</span>
                       {% endif %}
                     </td>
                     <td>
                       {% if record.status == 'resolved' %}
-                      <span class="badge bg-success">Resolved</span>
+                      <span class="badge bg-success" style="font-size: 0.8rem;">Resolved</span>
                       {% elif record.status == 'in_progress' %}
-                      <span class="badge bg-info">In Progress</span>
+                      <span class="badge bg-info" style="font-size: 0.8rem;">In Progress</span>
                       {% else %}
-                      <span class="badge bg-warning">Pending</span>
+                      <span class="badge bg-warning" style="font-size: 0.8rem;">Pending</span>
                       {% endif %}
                     </td>
                     <td>
                       <div class="btn-group">
+                        <a href="{{ url_for('admin.view_maintenance', record_id=record.id) }}" 
+                           class="btn btn-outline-info btn-sm" title="View Details">
+                          <i class="fas fa-eye"></i>
+                        </a>
                         <a href="{{ url_for('admin.edit_maintenance', record_id=record.id) }}" 
                            class="btn btn-outline-warning btn-sm" title="Edit Record">
-                          <i class="bi bi-pencil"></i>
+                          <i class="fas fa-edit"></i>
                         </a>
                         <form action="{{ url_for('admin.delete_maintenance', record_id=record.id) }}" 
                               method="POST" class="d-inline">
                           <button type="submit" class="btn btn-outline-danger btn-sm" 
                                   onclick="return confirm('Delete this maintenance record?')"
                                   title="Delete Record">
-                            <i class="bi bi-trash"></i>
+                            <i class="fas fa-trash"></i>
                           </button>
                         </form>
                       </div>
                     </td>
                   </tr>
+                  <!-- Add this row for resolution details -->
+                  {% if record.status == 'resolved' and record.resolution_details %}
+                  <tr class="bg-light">
+                    <td colspan="9" class="p-2" style="font-size: 0.875rem;">
+                      <div class="d-flex align-items-start">
+                        <div class="me-2">
+                          <i class="fas fa-check-circle text-success mt-1"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-1 text-success" style="font-size: 0.9rem;">Resolution Details</h6>
+                          <p class="mb-0 text-muted">{{ record.resolution_details }}</p>
+                          {% if record.date_resolved %}
+                          <small class="text-muted">
+                            <i class="fas fa-calendar-check me-1"></i>
+                            Resolved on {{ record.date_resolved.strftime('%Y-%m-%d') }}
+                          </small>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endif %}
                   {% endfor %}
                 </tbody>
               </table>
             </div>
             {% else %}
             <div class="text-center py-5">
-              <i class="bi bi-tools display-1 text-muted"></i>
+              <i class="fas fa-tools display-1 text-muted"></i>
               <h5 class="mt-3 text-muted">No Maintenance Records Found</h5>
               <p class="text-muted mb-4">Start tracking maintenance by adding your first record</p>
               <div class="d-flex gap-3 justify-content-center">
-                <a class="btn btn-najmi-primary" href="{{ url_for('admin.add_maintenance') }}">
-                  <i class="bi bi-plus-circle me-2"></i>Add First Maintenance Record
+                <a class="btn btn-primary" href="{{ url_for('admin.add_maintenance') }}">
+                  <i class="fas fa-plus-circle me-2"></i>Add First Maintenance Record
                 </a>
                 <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
-                  <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                  <i class="fas fa-arrow-left me-2"></i>Dashboard
                 </a>
               </div>
             </div>
@@ -248,7 +351,4 @@
       </div>
     </div>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

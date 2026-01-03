@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Login Activities - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-clock-history me-2 text-primary"></i>Login Activities
+            </h2>
+            <p class="text-muted mb-0">Track all user login sessions and computer usage</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #10b981;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1 text-success">{{ active_sessions_count }}</h2>
+                            <p class="stat-label text-muted mb-0">Active Sessions</p>
+                            <small class="text-success">
+                                <i class="bi bi-person-check me-1"></i>Currently logged in
+                            </small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-person-check text-success" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #3b82f6;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1 text-primary">{{ total_activities }}</h2>
+                            <p class="stat-label text-muted mb-0">Total Sessions</p>
+                            <small class="text-primary">
+                                <i class="bi bi-clock me-1"></i>All time records
+                            </small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-clock text-primary" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #8b5cf6;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1" style="color: #8b5cf6;">Real-time</h2>
+                            <p class="stat-label text-muted mb-0">Monitoring</p>
+                            <small style="color: #8b5cf6;">
+                                <i class="bi bi-eye me-1"></i>Live tracking
+                            </small>
+                        </div>
+                        <div style="background-color: rgba(139, 92, 246, 0.1);" class="p-3 rounded">
+                            <i class="bi bi-eye" style="color: #8b5cf6; font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="stat-number mb-1 text-warning">{{ login_activities|length }}</h2>
+                            <p class="stat-label text-muted mb-0">Current Page</p>
+                            <small class="text-warning">
+                                <i class="bi bi-list me-1"></i>Showing records
+                            </small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-list text-warning" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('admin.login_activities') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" name="username" value="{{ username_filter }}" placeholder="Search by username...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="logged_out" {% if status_filter == 'logged_out' %}selected{% endif %}>Logged Out</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="d-flex gap-2 w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Filter
+                        </button>
+                        <a href="{{ url_for('admin.login_activities') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Activities Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-columns-reverse me-2"></i>All Login Sessions
+            </h5>
+            <div class="text-muted small">
+                Page {{ page }} of {{ total_pages }}
+            </div>
+        </div>
+        <div class="card-body">
+            {% if login_activities %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Computer</th>
+                            <th>IP Address</th>
+                            <th>Login Time</th>
+                            <th>Logout Time</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in login_activities %}
+                        <tr>
+                            <td>
+                                <strong>{{ activity.username }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-pc me-1"></i>{{ activity.computer_name|default('Unknown') }}
+                                </span>
+                            </td>
+                            <td>
+                                <code>{{ activity.ip_address }}</code>
+                            </td>
+                            <td>
+                                {{ activity.login_time.strftime('%Y-%m-%d %H:%M:%S') if activity.login_time else 'N/A' }}
+                            </td>
+                            <td>
+                                {% if activity.logout_time %}
+                                {{ activity.logout_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if activity.duration %}
+                                {{ activity.duration }}
+                                {% elif activity.status == 'active' %}
+                                <span class="text-success">In progress...</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if activity.status == 'active' %}
+                                <span class="badge bg-success">
+                                    <span class="status-indicator status-active"></span>Active
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    <span class="status-indicator status-offline"></span>Logged out
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if activity.user_agent %}
+                                <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#details{{ activity.id }}" aria-expanded="false">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if activity.user_agent %}
+                        <tr class="collapse" id="details{{ activity.id }}">
+                            <td colspan="8" class="bg-light">
+                                <div class="p-2">
+                                    <small class="text-muted d-block mb-1">
+                                        <strong>User Agent:</strong>
+                                    </small>
+                                    <code class="small">{{ activity.user_agent }}</code>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.login_activities', page=page-1, username=username_filter, status=status_filter) }}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ p }}</span>
+                        </li>
+                        {% elif p >= page - 2 and p <= page + 2 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.login_activities', page=p, username=username_filter, status=status_filter) }}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.login_activities', page=page+1, username=username_filter, status=status_filter) }}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-person-x display-1 text-muted mb-3"></i>
+                <h5 class="text-muted mb-3">No Login Activities Found</h5>
+                <p class="text-muted mb-4">No login activities have been recorded yet.</p>
+                {% if username_filter or status_filter %}
+                <a href="{{ url_for('admin.login_activities') }}" class="btn btn-primary">
+                    Clear Filters
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    .status-active { background: #10b981; }
+    .status-offline { background: #a0aec0; }
+    
+    code {
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #64748b;
+        border-bottom-width: 2px;
+    }
+</style>
+{% endblock %}

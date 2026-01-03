@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Record Details - Najmi International{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <h2 class="mb-1 fw-bold text-dark">
+                        <i class="fas fa-tools me-2"></i>Maintenance Record Details
+                    </h2>
+                    <p class="text-muted mb-0">Record ID: #{{ record.id }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('admin.maintenance_records') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Records
+                    </a>
+                    <a href="{{ url_for('admin.edit_maintenance', record_id=record.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Edit Record
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card maintenance-card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Record Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Device:</strong></td>
+                                    <td>
+                                        {% if record.device_type == 'computer' %}
+                                        <i class="fas fa-laptop text-primary me-2"></i>
+                                        {% else %}
+                                        <i class="fas fa-print text-success me-2"></i>
+                                        {% endif %}
+                                        {{ record.device_name }} ({{ record.device_type|title }})
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Station:</strong></td>
+                                    <td>{{ record.station_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Technician:</strong></td>
+                                    <td>{{ record.technician }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date Reported:</strong></td>
+                                    <td>{{ record.date_reported.strftime('%B %d, %Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if record.status == 'resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                        {% elif record.status == 'in_progress' %}
+                                        <span class="badge bg-info">In Progress</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date Resolved:</strong></td>
+                                    <td>
+                                        {% if record.date_resolved %}
+                                        {{ record.date_resolved.strftime('%B %d, %Y') }}
+                                        {% else %}
+                                        <span class="text-muted">Not resolved yet</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Priority:</strong></td>
+                                    <td>
+                                        {% if record.priority == 'high' %}
+                                        <span class="badge bg-danger">High</span>
+                                        {% elif record.priority == 'medium' %}
+                                        <span class="badge bg-warning">Medium</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Low</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Estimated Cost:</strong></td>
+                                    <td>
+                                        {% if record.estimated_cost %}
+                                        ${{ "%.2f"|format(record.estimated_cost) }}
+                                        {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Issue Description:</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {{ record.issue_description|replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if record.resolution_notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Resolution Notes:</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {{ record.resolution_notes|replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if record.parts_used %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Parts Used:</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {{ record.parts_used|replace('\n', '<br>')|safe }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card maintenance-card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.edit_maintenance', record_id=record.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Edit This Record
+                        </a>
+                        <a href="{{ url_for('admin.maintenance_records') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Back to All Records
+                        </a>
+                        <a href="{{ url_for('admin.add_maintenance') }}" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-2"></i>Add New Record
+                        </a>
+                        <form action="{{ url_for('admin.delete_maintenance', record_id=record.id) }}" method="POST">
+                            <button type="submit" class="btn btn-outline-danger w-100" 
+                                    onclick="return confirm('Delete this maintenance record?')">
+                                <i class="fas fa-trash me-2"></i>Delete Record
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

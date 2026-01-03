@@ -1,4 +1,3 @@
-<!-- templates/add_edit_equipment.html -->
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
@@ -8,7 +7,7 @@
     </h5>
   </div>
   <div class="card-body">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% if kind == 'computer' %}
         <div class="mb-3">
           <label class="form-label">Computer Name</label>
@@ -19,7 +18,6 @@
           <input name="assigned_user" class="form-control" value="{{ item['assigned_user'] if item else '' }}">
         </div>
         
-        <!-- Add Status field for computers -->
         <div class="mb-3">
           <label class="form-label">Status</label>
           <select name="status" class="form-select">
@@ -52,6 +50,31 @@
           <input name="product_id" class="form-control" value="{{ item['product_id'] if item else '' }}">
         </div>
         <div class="mb-3">
+          <label class="form-label">Serial Number</label>
+          <input name="serial_number" class="form-control" value="{{ item['serial_number'] if item else '' }}">
+        </div>
+
+        <!-- Encryption Key Section -->
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Encryption</label>
+            <select name="encryption_type" class="form-select">
+              <option value="">Select Encryption Type</option>
+              <option value="BIOS Manager" {% if item and item['encryption_type']=='BIOS Manager' %}selected{% endif %}>BIOS Manager</option>
+              <option value="Bitlocker Manager" {% if item and item['encryption_type']=='Bitlocker Manager' %}selected{% endif %}>Bitlocker Manager</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Encryption Key</label>
+            <input name="encryption_key" class="form-control" value="{{ item['encryption_key'] if item else '' }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">BIOS Password (Optional)</label>
+            <input name="bios_password" class="form-control" value="{{ item['bios_password'] if item else '' }}">
+          </div>
+        </div>
+
+        <div class="mb-3">
           <label class="form-label">System Type</label>
           <input name="system_type" class="form-control" value="{{ item['system_type'] if item else '' }}">
         </div>
@@ -64,26 +87,67 @@
           <input name="windows" class="form-control" value="{{ item['windows'] if item else '' }}">
         </div>
 
-        <!-- Notes field for computers -->
+        <!-- Image Upload Section -->
+        <div class="mb-3">
+          <label class="form-label">Computer Images (Optional - Max 5 images)</label>
+          
+          <!-- Existing Images Display -->
+          <div id="existingImages" class="mb-3">
+            {% if action == 'Edit' and item and item.images %}
+              {% set existing_images = [] %}
+              {% if item.images %}
+                {% if item.images is string %}
+                  {% set existing_images = item.images|fromjson %}
+                {% else %}
+                  {% set existing_images = item.images %}
+                {% endif %}
+              {% endif %}
+              
+              {% for image_path in existing_images %}
+              <div class="existing-image-item mb-2 d-inline-block me-2 position-relative">
+                <img src="{{ url_for('static', filename=image_path) }}" alt="Computer image" class="img-thumbnail" style="width: 150px; height: 100px; object-fit: cover;">
+                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removeExistingImage(this, '{{ image_path }}')">
+                  <i class="bi bi-x"></i>
+                </button>
+                <input type="hidden" name="existing_images" value="{{ image_path }}">
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <!-- New Image Upload -->
+          <div id="imageUploadArea">
+            <div class="image-upload-item mb-2">
+              <input type="file" name="computer_images" class="form-control" accept="image/*" onchange="previewImage(this)">
+              <div class="image-preview mt-1"></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addImageField()" id="addImageBtn">
+            <i class="bi bi-plus-circle"></i> Add Another Image
+          </button>
+          <small class="form-text text-muted">You can upload up to 5 images. Accepted formats: JPG, PNG, GIF</small>
+          
+          <!-- Hidden field to track deleted images -->
+          <input type="hidden" name="deleted_images" id="deletedImages" value="">
+        </div>
+
         <div class="mb-3">
           <label class="form-label">Notes</label>
           <textarea name="notes" class="form-control">{{ item['notes'] if item else '' }}</textarea>
         </div>
 
-        <!-- Last Serviced field -->
         <div class="mb-3">
-          <label class="form-label">Last Serviced (YYYY-MM-DD)</label>
-          <input name="last_serviced" class="form-control" value="{{ item['last_serviced'] if item and item['last_serviced'] else '' }}">
+          <label class="form-label">Last Serviced</label>
+          <input type="date" name="last_serviced" class="form-control" 
+           value="{{ item['last_serviced'] if item and item['last_serviced'] else '' }}">
         </div>
-
-        <!-- Service History field -->
+        
         <div class="mb-3">
           <label class="form-label">Service History</label>
           <textarea name="history" class="form-control" rows="4">{{ item['history'] if item else '' }}</textarea>
         </div>
 
       {% else %}
-        <!-- Printer section remains the same -->
         <div class="mb-3">
           <label class="form-label">Printer Name</label>
           <input name="printer_name" class="form-control" required value="{{ item['name'] if item else '' }}">
@@ -113,8 +177,148 @@
       <button type="submit" class="btn btn-success">
         {% if action == 'Edit' %}Update{% else %}Add{% endif %}
       </button>
-      <a href="{% if session.role == 'admin' %}{{ url_for('admin.view_station', station_id=item['station_id'] if item else station_id) }}{% else %}{{ url_for('user.user_dashboard') }}{% endif %}" class="btn btn-secondary">Cancel</a>
-    </form>
+      <a href="{% if kind == 'computer' %}{{ url_for('admin.view_computers') }}{% else %}{{ url_for('admin.view_printers') }}{% endif %}" class="btn btn-secondary">Cancel</a>
   </div>
 </div>
+
+<style>
+.image-upload-item {
+  position: relative;
+}
+.image-preview {
+  max-width: 200px;
+  max-height: 150px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px;
+  display: none;
+}
+.image-preview img {
+  max-width: 100%;
+  max-height: 140px;
+}
+.remove-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255,0,0,0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.existing-image-item .btn {
+  transform: translate(50%, -50%);
+}
+</style>
+
+<script>
+let imageCount = 1;
+const maxImages = 5;
+let deletedImages = [];
+
+function addImageField() {
+  if (imageCount < maxImages) {
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const newImageItem = document.createElement('div');
+    newImageItem.className = 'image-upload-item mb-2';
+    newImageItem.innerHTML = `
+      <input type="file" name="computer_images" class="form-control" accept="image/*" onchange="previewImage(this)">
+      <button type="button" class="remove-image" onclick="removeImageField(this)">×</button>
+      <div class="image-preview mt-1"></div>
+    `;
+    imageUploadArea.appendChild(newImageItem);
+    imageCount++;
+    
+    if (imageCount >= maxImages) {
+      document.getElementById('addImageBtn').style.display = 'none';
+    }
+  }
+}
+
+function removeImageField(button) {
+  const imageItem = button.parentElement;
+  imageItem.remove();
+  imageCount--;
+  
+  document.getElementById('addImageBtn').style.display = 'block';
+  
+  // Update image count based on actual fields
+  const imageFields = document.querySelectorAll('.image-upload-item');
+  imageCount = imageFields.length;
+}
+
+function previewImage(input) {
+  const preview = input.parentElement.querySelector('.image-preview');
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+      preview.style.display = 'block';
+    }
+    
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+}
+
+function removeExistingImage(button, imagePath) {
+  // Add to deleted images list
+  deletedImages.push(imagePath);
+  document.getElementById('deletedImages').value = JSON.stringify(deletedImages);
+  
+  // Remove from display
+  const imageItem = button.closest('.existing-image-item');
+  imageItem.remove();
+  
+  // Show notification
+  showToast('Image marked for deletion. Save changes to confirm.');
+}
+
+function showToast(message) {
+  // Create a simple toast notification
+  const toast = document.createElement('div');
+  toast.className = 'alert alert-info alert-dismissible fade show position-fixed';
+  toast.style.top = '20px';
+  toast.style.right = '20px';
+  toast.style.zIndex = '1050';
+  toast.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(toast);
+  
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.remove();
+    }
+  }, 3000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Count existing images and adjust available slots
+  const existingImages = document.querySelectorAll('.existing-image-item');
+  const existingCount = existingImages.length;
+  
+  // Adjust available slots for new images
+  imageCount = Math.max(imageCount, existingCount);
+  
+  // Hide add button if we're at max capacity
+  if (existingCount + imageCount >= maxImages) {
+    document.getElementById('addImageBtn').style.display = 'none';
+  }
+  
+  // Initialize deleted images array
+  deletedImages = [];
+});
+</script>
 {% endblock %}

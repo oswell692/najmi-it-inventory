@@ -9,7 +9,7 @@ from models.db_models import init_db
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "replace_with_a_real_secret"  # change this
 
-# initialize DB tables (safe to run multiple times)
+# initialize DB tables 
 init_db()
 
 # Register blueprints
