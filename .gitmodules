@@ -1,0 +1,3 @@
+[submodule "najmi-it-inventory"]
+	path = najmi-it-inventory
+	url = https://github.com/oswell692/najmi-it-inventory.git
