@@ -7,8 +7,17 @@ import json
 import socket
 from werkzeug.utils import secure_filename
 import psycopg2.extras
-
+import time
+from flask import current_app
 admin_bp = Blueprint('admin', __name__)
+
+
+
+def allowed_file(filename):
+    """Check if the file has an allowed extension"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Helper functions for login activities
 def get_login_activities(limit=10):
@@ -751,23 +760,51 @@ def add_printer(station_id):
         return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
-        # <-- changed: data no longer includes 'type'; match printers table columns
-        data = (
+        # Handle image uploads for printers
+        uploaded_images = []
+        
+        # Process new image uploads
+        if 'printer_images' in request.files:
+            files = request.files.getlist('printer_images')
+            
+            for file in files:
+                if file and file.filename:
+                    # Validate file is an image
+                    if allowed_file(file.filename):
+                        # Create uploads directory if it doesn't exist
+                        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'printers')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        # Generate secure filename
+                        filename = secure_filename(file.filename)
+                        # Add timestamp to make filename unique
+                        unique_filename = f"{int(time.time())}_{filename}"
+                        file_path = os.path.join(upload_folder, unique_filename)
+                        file.save(file_path)
+                        
+                        # Store relative path for database
+                        relative_path = f"uploads/printers/{unique_filename}"
+                        uploaded_images.append(relative_path)
+        
+        # Convert images list to JSON string for database storage
+        images_json = json.dumps(uploaded_images) if uploaded_images else None
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Include images in the INSERT statement
+        cur.execute("""
+            INSERT INTO printers
+            (station_id, name, serial_number, year_purchased, status, notes, images)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
             station_id,
             request.form.get('printer_name'),
             request.form.get('serial_number'),
             request.form.get('year_purchased'),
             request.form.get('status'),
-            request.form.get('notes')
-        )
-        conn = get_db_connection()
-        cur = conn.cursor()
-        # <-- changed: insert into printers table
-        cur.execute("""
-            INSERT INTO printers
-            (station_id, name, serial_number, year_purchased, status, notes)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, data)
+            request.form.get('notes'),
+            images_json
+        ))
         conn.commit()
         cur.close()
         conn.close()
@@ -784,7 +821,7 @@ def edit_printer(equipment_id):
 
     conn = get_db_connection()
     cur = conn.cursor()
-    # <-- changed: select printer from printers table
+    # Get printer data
     cur.execute("SELECT * FROM printers WHERE id=%s", (equipment_id,))
     printer = cur.fetchone()
 
@@ -795,9 +832,71 @@ def edit_printer(equipment_id):
         return redirect(url_for('admin.admin_dashboard'))
 
     if request.method == 'POST':
-        # <-- changed: update printers table, including notes
+        # Get existing images
+        existing_images = []
+        if printer and printer['images']:
+            try:
+                existing_images = json.loads(printer['images'])
+            except:
+                # If images is not valid JSON, treat it as empty
+                existing_images = []
+        
+        # Get existing images from form that are NOT deleted
+        form_existing_images = request.form.getlist('existing_images')
+        
+        # Get deleted images from form
+        deleted_images_json = request.form.get('deleted_images', '[]')
+        try:
+            deleted_images = json.loads(deleted_images_json)
+        except:
+            deleted_images = []
+        
+        # Filter out deleted images
+        final_existing_images = [img for img in existing_images if img not in deleted_images]
+        
+        # Handle new image uploads
+        uploaded_images = []
+        
+        if 'printer_images' in request.files:
+            files = request.files.getlist('printer_images')
+            
+            for file in files:
+                if file and file.filename:
+                    if allowed_file(file.filename):
+                        # Create uploads directory if it doesn't exist
+                        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'printers')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        # Generate secure filename
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{int(time.time())}_{filename}"
+                        file_path = os.path.join(upload_folder, unique_filename)
+                        file.save(file_path)
+                        
+                        # Store relative path for database
+                        relative_path = f"uploads/printers/{unique_filename}"
+                        uploaded_images.append(relative_path)
+        
+        # Combine existing (non-deleted) and new images
+        all_images = final_existing_images + uploaded_images
+        
+        # Convert to JSON string for database
+        images_json = json.dumps(all_images) if all_images else None
+        
+        # Delete actual image files from server for deleted images
+        for deleted_image in deleted_images:
+            try:
+                # Construct full path to the image file
+                image_path = os.path.join(current_app.root_path, 'static', deleted_image)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+            except Exception as e:
+                print(f"Error deleting printer image {deleted_image}: {e}")
+        
+        # Update printer including images
         cur.execute("""
-            UPDATE printers SET name=%s, serial_number=%s, year_purchased=%s, status=%s, notes=%s
+            UPDATE printers SET name=%s, serial_number=%s, year_purchased=%s, 
+            status=%s, notes=%s, images=%s
             WHERE id=%s
         """, (
             request.form.get('printer_name'),
@@ -805,6 +904,7 @@ def edit_printer(equipment_id):
             request.form.get('year_purchased'),
             request.form.get('status'),
             request.form.get('notes'),
+            images_json,
             equipment_id
         ))
         conn.commit()
@@ -813,9 +913,98 @@ def edit_printer(equipment_id):
         flash("Printer updated successfully.", "success")
         return redirect(url_for('admin.view_printers'))
 
+    # For GET request, parse images JSON if it exists
+    if printer and printer['images']:
+        try:
+            printer['images'] = json.loads(printer['images'])
+        except:
+            printer['images'] = []
+    else:
+        printer['images'] = []
+        
     cur.close()
     conn.close()
     return render_template('add_edit_equipment.html', kind='printer', action='Edit', item=printer)
+
+@admin_bp.route('/admin/printer/<int:equipment_id>')
+def view_printer(equipment_id):
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.login'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Join with stations table to get station details
+    cur.execute("""
+        SELECT p.*, s.name as station_name, s.location 
+        FROM printers p 
+        LEFT JOIN stations s ON p.station_id = s.id 
+        WHERE p.id=%s
+    """, (equipment_id,))
+    printer = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not printer:
+        flash("Printer not found.", "warning")
+        return redirect(url_for('admin.view_printers'))
+
+    # Parse images JSON if it exists
+    if printer and printer['images']:
+        try:
+            printer['images'] = json.loads(printer['images'])
+        except:
+            printer['images'] = []
+    else:
+        printer['images'] = []
+
+    return render_template('single_printer.html', printer=printer)
+
+@admin_bp.route('/admin/printer/<int:printer_id>/delete', methods=['POST'])
+def delete_printer(printer_id):
+    if session.get('role') != 'admin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.login'))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Get printer data including images
+        cur.execute("SELECT images FROM printers WHERE id=%s", (printer_id,))
+        printer = cur.fetchone()
+        
+        if not printer:
+            flash("Printer not found.", "warning")
+            return redirect(url_for('admin.view_printers'))
+        
+        # Delete associated image files
+        if printer and printer['images']:
+            try:
+                images = json.loads(printer['images'])
+                for image_path in images:
+                    try:
+                        full_path = os.path.join(current_app.root_path, 'static', image_path)
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                    except Exception as e:
+                        print(f"Error deleting printer image {image_path}: {e}")
+            except:
+                pass
+        
+        # Delete the printer from database
+        cur.execute("DELETE FROM printers WHERE id=%s", (printer_id,))
+        conn.commit()
+        flash("Printer deleted successfully.", "success")
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error deleting printer: {str(e)}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+    return redirect(url_for('admin.view_printers'))
 
 # ---------------- DELETE EQUIPMENT ----------------
 @admin_bp.route('/admin/equipment/<int:equipment_id>/delete', methods=['POST'])
@@ -889,24 +1078,7 @@ def view_computer(equipment_id):
     conn.close()
     return render_template('view_computer.html', computer=computer)
 
-@admin_bp.route('/admin/printer/<int:equipment_id>')
-def view_printer(equipment_id):
-    if session.get('role') != 'admin':
-        flash("Access denied.", "danger")
-        return redirect(url_for('auth.login'))
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM printers WHERE id=%s", (equipment_id,))
-    printer = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if not printer:
-        flash("Printer not found.", "warning")
-        return redirect(url_for('admin.view_printers'))
-
-    return render_template('single_printer.html', printer=printer)
 
 # ---------------- EDIT STATION ----------------
 @admin_bp.route('/admin/station/<int:station_id>/edit', methods=['GET', 'POST'])
@@ -1432,11 +1604,40 @@ def add_router():
         cur = conn.cursor()
         
         try:
+            # Handle image uploads
+            uploaded_images = []
+            
+            # Process new image uploads
+            if 'router_images' in request.files:
+                files = request.files.getlist('router_images')
+                
+                for file in files:
+                    if file and file.filename:
+                        # Validate file is an image
+                        if allowed_file(file.filename):
+                            # Create uploads directory if it doesn't exist
+                            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'routers')
+                            os.makedirs(upload_folder, exist_ok=True)
+                            
+                            # Generate secure filename
+                            filename = secure_filename(file.filename)
+                            # Add timestamp to make filename unique
+                            unique_filename = f"{int(time.time())}_{filename}"
+                            file_path = os.path.join(upload_folder, unique_filename)
+                            file.save(file_path)
+                            
+                            # Store relative path for database
+                            relative_path = f"uploads/routers/{unique_filename}"
+                            uploaded_images.append(relative_path)
+            
+            # Convert images list to JSON string for database storage
+            images_json = json.dumps(uploaded_images) if uploaded_images else None
+            
             cur.execute("""
                 INSERT INTO routers 
                 (station_id, name, brand, model, ip_address, serial_number, 
-                 username, password, status, purchase_date, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 username, password, status, purchase_date, notes, images)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 request.form.get('station_id'),
                 request.form.get('router_name'),
@@ -1445,10 +1646,11 @@ def add_router():
                 request.form.get('ip_address'),
                 request.form.get('serial_number'),
                 request.form.get('username'),
-                request.form.get('password'),  # Add password field
+                request.form.get('password'),
                 request.form.get('status', 'active'),
                 request.form.get('purchase_date'),
-                request.form.get('notes')
+                request.form.get('notes'),
+                images_json
             ))
             
             conn.commit()
@@ -1458,6 +1660,8 @@ def add_router():
         except Exception as e:
             conn.rollback()
             flash(f"Error adding router: {str(e)}", "danger")
+            import traceback
+            traceback.print_exc()
         finally:
             cur.close()
             conn.close()
@@ -1486,16 +1690,89 @@ def edit_router(router_id):
         if not router:
             flash("Router not found.", "warning")
             return redirect(url_for('admin.view_routers'))
+        
+        # Parse images JSON if it exists
+        if router and router['images']:
+            try:
+                router['images'] = json.loads(router['images'])
+            except:
+                router['images'] = []
+        else:
+            router['images'] = []
             
         return render_template('add_edit_router.html', action='Edit', router=router, stations=stations)
 
     # POST request - update router
     try:
+        # Get existing images
+        cur.execute("SELECT images FROM routers WHERE id = %s", (router_id,))
+        existing_data = cur.fetchone()
+        existing_images = []
+        
+        if existing_data and existing_data['images']:
+            try:
+                existing_images = json.loads(existing_data['images'])
+            except:
+                # If images is not valid JSON, treat it as empty
+                existing_images = []
+        
+        # Get existing images from form that are NOT deleted
+        form_existing_images = request.form.getlist('existing_images')
+        
+        # Get deleted images from form
+        deleted_images_json = request.form.get('deleted_images', '[]')
+        try:
+            deleted_images = json.loads(deleted_images_json)
+        except:
+            deleted_images = []
+        
+        # Filter out deleted images
+        final_existing_images = [img for img in existing_images if img not in deleted_images]
+        
+        # Handle new image uploads
+        uploaded_images = []
+        
+        if 'router_images' in request.files:
+            files = request.files.getlist('router_images')
+            
+            for file in files:
+                if file and file.filename:
+                    if allowed_file(file.filename):
+                        # Create uploads directory if it doesn't exist
+                        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'routers')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        # Generate secure filename
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{int(time.time())}_{filename}"
+                        file_path = os.path.join(upload_folder, unique_filename)
+                        file.save(file_path)
+                        
+                        # Store relative path for database
+                        relative_path = f"uploads/routers/{unique_filename}"
+                        uploaded_images.append(relative_path)
+        
+        # Combine existing (non-deleted) and new images
+        all_images = final_existing_images + uploaded_images
+        
+        # Convert to JSON string for database
+        images_json = json.dumps(all_images) if all_images else None
+        
+        # Delete actual image files from server for deleted images
+        for deleted_image in deleted_images:
+            try:
+                # Construct full path to the image file
+                image_path = os.path.join(current_app.root_path, 'static', deleted_image)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+            except Exception as e:
+                print(f"Error deleting image {deleted_image}: {e}")
+        
         cur.execute("""
             UPDATE routers SET 
             station_id=%s, name=%s, brand=%s, model=%s, ip_address=%s, 
             serial_number=%s, username=%s, password=%s, status=%s, 
-            purchase_date=%s, notes=%s
+            purchase_date=%s, notes=%s, images=%s
             WHERE id=%s
         """, (
             request.form.get('station_id'),
@@ -1505,10 +1782,11 @@ def edit_router(router_id):
             request.form.get('ip_address'),
             request.form.get('serial_number'),
             request.form.get('username'),
-            request.form.get('password'),  # Add password field
+            request.form.get('password'),
             request.form.get('status'),
             request.form.get('purchase_date'),
             request.form.get('notes'),
+            images_json,
             router_id
         ))
         
@@ -1518,12 +1796,13 @@ def edit_router(router_id):
     except Exception as e:
         conn.rollback()
         flash(f"Error updating router: {str(e)}", "danger")
+        import traceback
+        traceback.print_exc()
     finally:
         cur.close()
         conn.close()
 
     return redirect(url_for('admin.view_router', router_id=router_id))
-
 @admin_bp.route('/admin/router/<int:router_id>')
 def view_router(router_id):
     if session.get('role') != 'admin':
@@ -1546,6 +1825,15 @@ def view_router(router_id):
         flash("Router not found.", "warning")
         return redirect(url_for('admin.view_routers'))
 
+    # Parse images JSON if it exists
+    if router and router['images']:
+        try:
+            router['images'] = json.loads(router['images'])
+        except:
+            router['images'] = []
+    else:
+        router['images'] = []
+
     return render_template('view_router.html', router=router)
 
 @admin_bp.route('/admin/router/<int:router_id>/delete', methods=['POST'])
@@ -1558,6 +1846,25 @@ def delete_router(router_id):
     cur = conn.cursor()
     
     try:
+        # First, get the router's images to delete them from filesystem
+        cur.execute("SELECT images FROM routers WHERE id = %s", (router_id,))
+        router_data = cur.fetchone()
+        
+        # Delete associated image files
+        if router_data and router_data['images']:
+            try:
+                images = json.loads(router_data['images'])
+                for image_path in images:
+                    try:
+                        full_path = os.path.join(current_app.root_path, 'static', image_path)
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                    except Exception as e:
+                        print(f"Error deleting image {image_path}: {e}")
+            except:
+                pass
+        
+        # Now delete the router from database
         cur.execute("DELETE FROM routers WHERE id = %s", (router_id,))
         conn.commit()
         flash("Router deleted successfully!", "success")
@@ -1580,8 +1887,7 @@ def view_antivirus(antivirus_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    try:
-        # Get antivirus details
+    try:     
         cur.execute("""
             SELECT av.*, 
                    COUNT(ea.equipment_id) as assigned_count,
@@ -1599,7 +1905,6 @@ def view_antivirus(antivirus_id):
             flash('Antivirus not found.', 'danger')
             return redirect(url_for('admin.antivirus_list'))
         
-        # Get assigned equipment details
         cur.execute("""
             SELECT e.*, ea.installed_date, ea.assigned_by
             FROM equipment_antivirus ea
@@ -1618,7 +1923,6 @@ def view_antivirus(antivirus_id):
         cur.close()
         conn.close()
     
-    # Add today's date to the template context
     from datetime import date
     today = date.today()
     
@@ -1754,7 +2058,6 @@ def edit_antivirus(antivirus_id):
             license_type = request.form.get('license_type')
             notes = request.form.get('notes')
             
-            # Update antivirus
             cur.execute("""
                 UPDATE antivirus_software 
                 SET name = %s, version = %s, vendor = %s, activation_key = %s, 
@@ -1775,7 +2078,6 @@ def edit_antivirus(antivirus_id):
             cur.close()
             conn.close()
     
-    # GET request - get antivirus details
     try:
         cur.execute("SELECT * FROM antivirus_software WHERE id = %s", (antivirus_id,))
         antivirus = cur.fetchone()
@@ -1804,11 +2106,9 @@ def delete_antivirus(antivirus_id):
     cur = conn.cursor()
     
     try:
-        # Delete from equipment assignments first
+        
         cur.execute("DELETE FROM equipment_antivirus WHERE antivirus_id = %s", (antivirus_id,))
-        # Delete from notifications
         cur.execute("DELETE FROM antivirus_notifications WHERE antivirus_id = %s", (antivirus_id,))
-        # Delete the antivirus
         cur.execute("DELETE FROM antivirus_software WHERE id = %s", (antivirus_id,))
         
         conn.commit()
@@ -1882,7 +2182,7 @@ def check_antivirus_expiry():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Calculate date 2 months from now
+    
     two_months_later = (datetime.now() + timedelta(days=60)).date()
     
     # Find antivirus expiring in 2 months
@@ -1983,13 +2283,13 @@ def edit_send_items(send_id):
     send_items = cur.fetchall()
     
     if request.method == 'POST':
-        # Handle edit form submission
+        
         sent_by = request.form.get('sent_by')
         send_date = request.form.get('send_date')
         expected_delivery_date = request.form.get('expected_delivery_date') or None
         notes = request.form.get('notes')
         
-        # Update main send record
+        
         cur.execute("""
             UPDATE send_items 
             SET sent_by = %s, send_date = %s, 
@@ -1997,10 +2297,9 @@ def edit_send_items(send_id):
             WHERE id = %s
         """, (sent_by, send_date, expected_delivery_date, notes, send_id))
         
-        # Handle updating send items
-        # Access status using dictionary syntax
-        if send_record['status'] == 'sent':  # Only allow editing items if still in transit
-            # Get existing item IDs to track what to update/delete
+        
+        if send_record['status'] == 'sent':  
+            
             cur.execute("SELECT id FROM send_items_details WHERE send_id = %s", (send_id,))
             existing_ids = [row['id'] for row in cur.fetchall()]
             
@@ -2012,21 +2311,21 @@ def edit_send_items(send_id):
             
             # Update or insert items
             for i in range(len(item_names)):
-                if i < len(item_ids) and item_ids[i]:  # Update existing item
+                if i < len(item_ids) and item_ids[i]:  
                     cur.execute("""
                         UPDATE send_items_details 
                         SET item_name = %s, quantity = %s, condition = %s
                         WHERE id = %s AND send_id = %s
                     """, (item_names[i], item_quantities[i], item_conditions[i], 
                           item_ids[i], send_id))
-                else:  # Insert new item
+                else:  
                     cur.execute("""
                         INSERT INTO send_items_details 
                         (send_id, item_name, quantity, condition)
                         VALUES (%s, %s, %s, %s)
                     """, (send_id, item_names[i], item_quantities[i], item_conditions[i]))
             
-            # Delete items that were removed
+           
             submitted_ids = [int(id) for id in item_ids if id]
             ids_to_delete = [id for id in existing_ids if id not in submitted_ids]
             
@@ -2040,7 +2339,7 @@ def edit_send_items(send_id):
         flash("Send record updated successfully.", "success")
         return redirect(url_for('admin.send_items_history'))
     
-    # Get stations for dropdown (for reference, not editable)
+    
     cur.execute("SELECT * FROM stations ORDER BY name")
     stations = cur.fetchall()
     
@@ -2061,7 +2360,7 @@ def delete_send_items(send_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Check if the send record exists
+    
     cur.execute("SELECT * FROM send_items WHERE id = %s", (send_id,))
     send_record = cur.fetchone()
     
@@ -2069,10 +2368,10 @@ def delete_send_items(send_id):
         flash("Send record not found.", "warning")
         return redirect(url_for('admin.send_items_history'))
     
-    # Delete send items details first (due to foreign key constraints)
+    
     cur.execute("DELETE FROM send_items_details WHERE send_id = %s", (send_id,))
     
-    # Delete the main send record
+    
     cur.execute("DELETE FROM send_items WHERE id = %s", (send_id,))
     
     conn.commit()
@@ -2091,7 +2390,7 @@ def view_transfer(transfer_id):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Use the same query as edit_transfer (which works)
+    
     cur.execute("""
         SELECT t.*, 
                s1.name as from_station_name, 
@@ -2116,11 +2415,12 @@ def view_transfer(transfer_id):
 # ==================== STOCK MANAGEMENT ROUTES (PostgreSQL) ====================
 
 def get_notification_data(conn):
-    """Helper function to get notification data for any admin page"""
-    cur = conn.cursor()
-    
-    # Get recent activity (last 10 activities from last 7 days)
+    """Helper function to get notification data for any admin page - KEEPS ALL NOTIFICATIONS"""
+    cur = None
     try:
+        cur = conn.cursor()
+        
+        
         cur.execute("""
             SELECT id, action, details, user_name, created_at,
                    (created_at > NOW() - INTERVAL '1 hour') as is_unread,
@@ -2131,26 +2431,25 @@ def get_notification_data(conn):
                        ELSE EXTRACT(DAY FROM AGE(NOW(), created_at))::text || ' days ago'
                    END as time_ago
             FROM stock_history 
-            WHERE created_at > NOW() - INTERVAL '7 days'
             ORDER BY created_at DESC 
-            LIMIT 10
+            LIMIT 100  -- Get more notifications
         """)
         recent_activity = cur.fetchall()
-    except Exception as e:
-        print(f"Error getting recent activity: {e}")
-        recent_activity = []
-    
-    # Count unread notifications (last hour)
-    try:
+        
+        
         cur.execute("SELECT COUNT(*) as unread_count FROM stock_history WHERE created_at > NOW() - INTERVAL '1 hour'")
         unread_result = cur.fetchone()
         unread_notifications_count = unread_result['unread_count'] if unread_result else 0
+        
+        return recent_activity, unread_notifications_count
+        
     except Exception as e:
-        print(f"Error counting unread notifications: {e}")
-        unread_notifications_count = 0
-    
-    cur.close()
-    return recent_activity, unread_notifications_count
+        print(f"Error in get_notification_data: {e}")
+        
+        return [], 0
+    finally:
+        if cur:
+            cur.close()
 
 @admin_bp.route('/admin/stock_management')
 def stock_management():
@@ -2164,12 +2463,12 @@ def stock_management():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Get filter parameters
+        
         item_type = request.args.get('item_type', '')
         status = request.args.get('status', '')
         low_stock = request.args.get('low_stock', '')
         
-        # Build base query
+        
         query = """
             SELECT si.*, 
                    s1.name as sent_to_station_name,
@@ -2197,7 +2496,7 @@ def stock_management():
         cur.execute(query, params)
         stock_items = cur.fetchall()
         
-        # Get statistics
+       
         cur.execute("SELECT COUNT(*) as total FROM stock_items")
         result = cur.fetchone()
         total_stock_items = result['total'] if result else 0
@@ -2214,7 +2513,7 @@ def stock_management():
         result = cur.fetchone()
         low_stock_count = result['low_stock_count'] if result else 0
         
-        # Get low stock items
+        
         cur.execute("""
             SELECT si.*, s1.name as sent_to_station_name
             FROM stock_items si
@@ -2224,11 +2523,11 @@ def stock_management():
         """)
         low_stock_items = cur.fetchall()
         
-        # Get stations for dropdowns
+        
         cur.execute("SELECT id, name, location FROM stations ORDER BY name")
         stations = cur.fetchall()
         
-        # Get stock history (last 20 entries)
+       
         try:
             cur.execute("""
                 SELECT sh.*, si.item_name 
@@ -2241,7 +2540,7 @@ def stock_management():
         except Exception:
             stock_history = []
         
-        # Get notification data
+       
         recent_activity, unread_notifications_count = get_notification_data(conn)
         
         cur.close()
@@ -2298,7 +2597,7 @@ def add_stock_item():
         notes = request.form.get('notes')
         username = session.get('username', 'Admin')
         
-        # Insert into database (PostgreSQL RETURNING clause)
+       
         cur.execute("""
             INSERT INTO stock_items 
             (item_name, item_type, quantity, purchase_date, supplier, model_number, compatible_with, notes)
@@ -2306,10 +2605,10 @@ def add_stock_item():
             RETURNING id
         """, (item_name, item_type, quantity, purchase_date, supplier, model_number, compatible_with, notes))
         
-        # FIXED: Use dictionary access
+       
         stock_item_id = cur.fetchone()['id']
         
-        # Add to history
+       
         cur.execute("""
             INSERT INTO stock_history (stock_item_id, action, details, user_name, created_at)
             VALUES (%s, %s, %s, %s, NOW())
@@ -2344,12 +2643,12 @@ def update_stock_status():
         remaining_action = request.form.get('remaining_action', 'keep_in_stock')
         username = session.get('username', 'Admin')
         
-        # Validate send quantity
+       
         if send_quantity < 1:
             flash('Quantity to send must be at least 1.', 'danger')
             return redirect(url_for('admin.view_stock_item', item_id=stock_item_id))
         
-        # Get current item details
+        
         cur.execute("""
             SELECT item_name, quantity, status FROM stock_items WHERE id = %s
         """, (stock_item_id,))
@@ -2359,7 +2658,7 @@ def update_stock_status():
             flash('Stock item not found.', 'danger')
             return redirect(url_for('admin.stock_management'))
         
-        # Check if we have enough quantity
+        
         if item['quantity'] < send_quantity:
             flash(f'Not enough stock available. Only {item["quantity"]} items in stock.', 'danger')
             return redirect(url_for('admin.view_stock_item', item_id=stock_item_id))
@@ -2375,13 +2674,13 @@ def update_stock_status():
                 flash('Please select a station to send to.', 'danger')
                 return redirect(url_for('admin.view_stock_item', item_id=stock_item_id))
             
-            # Get station name for history
+            
             cur.execute("SELECT name FROM stations WHERE id = %s", (sent_to_station,))
             station = cur.fetchone()
             station_name = station['name'] if station else 'Unknown Station'
             
             if remaining_action == 'update_all':
-                # Update all items to sent status
+                
                 update_query = """
                     UPDATE stock_items 
                     SET status = 'Sent', 
@@ -2397,8 +2696,8 @@ def update_stock_status():
                 history_details = f'Sent ALL {item["quantity"]} of {item["item_name"]} to station: {station_name}'
                 flash_message = f'All {item["quantity"]} items sent to station successfully!'
                 
-            else:  # keep_in_stock
-                # Reduce quantity, keep status as "In Stock" if quantity > 0
+            else:  
+                
                 if new_quantity > 0:
                     update_query = """
                         UPDATE stock_items 
@@ -2407,7 +2706,7 @@ def update_stock_status():
                     """
                     params = (new_quantity, stock_item_id)
                 else:
-                    # If no items left, update status to Sent
+                    
                     update_query = """
                         UPDATE stock_items 
                         SET status = 'Sent', 
@@ -2423,10 +2722,10 @@ def update_stock_status():
                 history_details = f'Sent {send_quantity} of {item["item_name"]} to station: {station_name}. {new_quantity} items remain in stock.'
                 flash_message = f'{send_quantity} item(s) sent successfully! {new_quantity} items remain in stock.'
             
-            # Execute update
+            
             cur.execute(update_query, params)
             
-            # Add to history
+           
             cur.execute("""
                 INSERT INTO stock_history (stock_item_id, action, details, user_name, created_at)
                 VALUES (%s, %s, %s, %s, NOW())
@@ -2444,13 +2743,13 @@ def update_stock_status():
                 flash('Please fill in printer and station details.', 'danger')
                 return redirect(url_for('admin.view_stock_item', item_id=stock_item_id))
             
-            # Get station name for history
+            
             cur.execute("SELECT name FROM stations WHERE id = %s", (used_at_station,))
             station = cur.fetchone()
             station_name = station['name'] if station else 'Unknown Station'
             
             if remaining_action == 'update_all':
-                # Update all items to used status
+               
                 update_query = """
                     UPDATE stock_items 
                     SET status = 'Used', 
@@ -2467,8 +2766,8 @@ def update_stock_status():
                 history_details = f'Used ALL {item["quantity"]} of {item["item_name"]} for printer: {used_for_printer} at station: {station_name}'
                 flash_message = f'All {item["quantity"]} items marked as used successfully!'
                 
-            else:  # keep_in_stock
-                # Reduce quantity, keep status as "In Stock" if quantity > 0
+            else:  
+                
                 if new_quantity > 0:
                     update_query = """
                         UPDATE stock_items 
@@ -2477,7 +2776,7 @@ def update_stock_status():
                     """
                     params = (new_quantity, stock_item_id)
                 else:
-                    # If no items left, update status to Used
+                   
                     update_query = """
                         UPDATE stock_items 
                         SET status = 'Used', 
@@ -2494,10 +2793,10 @@ def update_stock_status():
                 history_details = f'Used {send_quantity} of {item["item_name"]} for printer: {used_for_printer} at station: {station_name}. {new_quantity} items remain in stock.'
                 flash_message = f'{send_quantity} item(s) marked as used successfully! {new_quantity} items remain in stock.'
             
-            # Execute update
+            
             cur.execute(update_query, params)
             
-            # Add to history
+            
             cur.execute("""
                 INSERT INTO stock_history (stock_item_id, action, details, user_name, created_at)
                 VALUES (%s, %s, %s, %s, NOW())
@@ -2589,18 +2888,18 @@ def delete_stock_item(item_id):
     cur = conn.cursor()
     
     try:
-        # Get item name for history before deleting - FIXED: Use dictionary access
+       
         cur.execute("SELECT item_name FROM stock_items WHERE id = %s", (item_id,))
         item = cur.fetchone()
         
         if item:
-            # Add to history before deletion
+          
             cur.execute("""
                 INSERT INTO stock_history (stock_item_id, action, details, user_name, created_at)
                 VALUES (%s, %s, %s, %s, NOW())
             """, (item_id, 'Deleted', f'Deleted {item["item_name"]} from stock', session['username']))
         
-        # Delete the item
+       
         cur.execute("DELETE FROM stock_items WHERE id = %s", (item_id,))
         
         conn.commit()
@@ -2627,10 +2926,10 @@ def restock_item(item_id):
     
     try:
         additional_quantity = request.form.get('quantity', 1)
-        purchase_date = request.form.get('purchase_date')  # NEW: Get purchase date
+        purchase_date = request.form.get('purchase_date')  
         username = session.get('username', 'Admin')
         
-        # Get current item details
+        
         cur.execute("SELECT item_name FROM stock_items WHERE id = %s", (item_id,))
         item = cur.fetchone()
         
@@ -2638,7 +2937,7 @@ def restock_item(item_id):
             flash('Stock item not found.', 'danger')
             return redirect(url_for('admin.stock_management'))
         
-        # Update quantity and reset status to In Stock
+       
         cur.execute("""
             UPDATE stock_items 
             SET quantity = quantity + %s, 
@@ -2646,7 +2945,6 @@ def restock_item(item_id):
             WHERE id = %s
         """, (additional_quantity, item_id))
         
-        # Prepare history details WITH purchase date if provided
         if purchase_date:
             history_details = f'Added {additional_quantity} more {item["item_name"]} to stock (Purchased: {purchase_date})'
         else:
@@ -2715,7 +3013,7 @@ def view_stock_item(item_id):
             flash('Stock item not found.', 'danger')
             return redirect(url_for('admin.stock_management'))
         
-        # Get item history
+        
         history_query = """
             SELECT * FROM stock_history 
             WHERE stock_item_id = %s 
@@ -2727,12 +3025,12 @@ def view_stock_item(item_id):
         history = cur.fetchall()
         print(f"DEBUG: Got {len(history)} history records")
         
-        # Get stations for dropdowns
+        
         cur.execute("SELECT id, name, location FROM stations ORDER BY name")
         stations = cur.fetchall()
         print(f"DEBUG: Got {len(stations)} stations")
         
-        # Get notification data
+        
         recent_activity, unread_notifications_count = get_notification_data(conn)
         print(f"DEBUG: Got {len(recent_activity)} recent activities")
         print(f"DEBUG: Unread notifications: {unread_notifications_count}")
@@ -2769,7 +3067,7 @@ def view_stock_item(item_id):
         flash(f'Error viewing stock item: {str(e)}', 'danger')
         return redirect(url_for('admin.stock_management'))
 
-# Add this route for AJAX notification updates if needed
+
 @admin_bp.route('/admin/get_notifications', methods=['GET'])
 def get_notifications():
     if session.get('role') != 'admin':
@@ -2779,7 +3077,7 @@ def get_notifications():
     try:
         recent_activity, unread_notifications_count = get_notification_data(conn)
         
-        # Format for JSON response
+       
         notifications = []
         for activity in recent_activity:
             notifications.append({

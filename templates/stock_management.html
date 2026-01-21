@@ -4,8 +4,7 @@
 
 {% block content %}
 <style>
-    /* All your existing CSS remains exactly the same */
-    /* Remove page scroll, keep only table scroll */
+    
     body, html {
         overflow: hidden;
         height: 100%;
@@ -18,7 +17,7 @@
         flex-direction: column;
     }
     
-    /* Make the table section take remaining space */
+    
     .card:last-child {
         flex: 1;
         min-height: 0;
@@ -33,7 +32,7 @@
         padding: 0 !important;
     }
     
-    /* Main table container - takes most space but leaves room for footer */
+    
     .table-main-container {
         flex: 1;
         min-height: 0;
@@ -42,14 +41,14 @@
         flex-direction: column;
     }
     
-    /* Custom table container for sticky headers */
+    
     .table-container {
         flex: 1;
         overflow: auto;
         position: relative;
     }
     
-    /* Make table header fixed with proper styling */
+    
     .stock-table {
         margin-bottom: 0;
         width: 100%;
@@ -77,14 +76,14 @@
         vertical-align: middle;
     }
     
-    /* Ensure thead has proper background when sticky */
+    
     .stock-table thead {
         position: sticky;
         top: 0;
         z-index: 10;
     }
     
-    /* Add notification styles to your existing CSS */
+    
     .status-indicator {
         width: 8px;
         height: 8px;
@@ -139,12 +138,12 @@
         color: white;
     }
     
-    /* STATIC NOTIFICATION DIALOG STYLES */
+    
     .notification-dialog {
         position: fixed;
         top: 80px;
         right: 20px;
-        width: 480px; /* Slightly wider for more filters */
+        width: 480px; 
         max-width: 90vw;
         background: white;
         border-radius: 12px;
@@ -152,7 +151,7 @@
         z-index: 1050;
         display: none;
         border: 1px solid #e2e8f0;
-        max-height: 80vh; /* Slightly taller */
+        max-height: 80vh; 
         flex-direction: column;
         overflow: hidden;
         animation: slideIn 0.3s ease-out;
@@ -192,7 +191,7 @@
         gap: 10px;
     }
     
-    /* NEW: Advanced search filters container */
+    
     .notification-filters-container {
         padding: 0.75rem 1.5rem;
         border-bottom: 1px solid #e2e8f0;
@@ -1135,8 +1134,8 @@
     </div>
 
   
-<!-- The rest of your modals and JavaScript remain exactly the same -->
-<!-- Add Stock Modal -->
+
+
 <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1207,7 +1206,7 @@
     </div>
 </div>
 
-<!-- Edit Stock Item Modal -->
+
 <div class="modal fade" id="editStockModal" tabindex="-1" aria-labelledby="editStockModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1397,7 +1396,7 @@
 </div>
 
 <script>
-    // Set edit stock data
+    
     function setEditStockData(itemId, itemName, itemType, quantity, supplier, modelNumber, compatibleWith, notes, purchaseDate) {
         document.getElementById('editStockItemId').value = itemId;
         document.getElementById('editItemName').value = itemName;
@@ -1410,14 +1409,14 @@
         document.getElementById('editPurchaseDate').value = purchaseDate;
     }
 
-    // Set status update data
+    
     function setStatusData(itemId, itemName, itemType) {
         document.getElementById('statusItemId').value = itemId;
         document.getElementById('statusItemName').textContent = itemName;
         document.getElementById('statusItemType').textContent = itemType;
     }
 
-    // Set restock data
+    
     function setRestockData(itemId, itemName, currentQuantity) {
         document.getElementById('restockItemId').value = itemId;
         document.getElementById('restockItemName').textContent = itemName;
@@ -1425,7 +1424,7 @@
         document.getElementById('restockForm').action = `/admin/restock_item/${itemId}`;
     }
 
-    // Delete stock item
+   
     function deleteStockItem(itemId) {
         if (confirm('Are you sure you want to delete this stock item? This action cannot be undone.')) {
             fetch(`/admin/delete_stock_item/${itemId}`, {
@@ -1448,7 +1447,7 @@
         }
     }
 
-    // Toggle between sent and used details in status modal
+   
     document.addEventListener('DOMContentLoaded', function() {
         const sentRadio = document.getElementById('statusSent');
         const usedRadio = document.getElementById('statusUsed');
@@ -1471,7 +1470,7 @@
             });
         }
         
-        // Set today's date for date inputs
+        
         const today = new Date().toISOString().split('T')[0];
         const dateInputs = ['purchaseDate', 'sentDate', 'usedDate', 'editPurchaseDate'];
         
@@ -1483,7 +1482,7 @@
         });
     });
 
-    // NOTIFICATION DIALOG FUNCTIONALITY
+    
     document.addEventListener('DOMContentLoaded', function() {
         const notificationBellBtn = document.getElementById('notificationBellBtn');
         const notificationDialog = document.getElementById('notificationDialog');
@@ -1493,7 +1492,7 @@
         const notificationList = document.getElementById('notificationList');
         const notificationBadge = document.querySelector('.notification-badge');
         
-        // Search elements
+        
         const notificationSearchInput = document.getElementById('notificationSearchInput');
         const notificationClearSearch = document.getElementById('notificationClearSearch');
         const notificationSearchInfo = document.getElementById('notificationSearchInfo');
@@ -1501,7 +1500,7 @@
         const notificationSearchTerm = document.getElementById('notificationSearchTerm');
         const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
         
-        // NEW: Advanced filter elements
+        
         const notificationFiltersToggle = document.getElementById('notificationFiltersToggle');
         const notificationFiltersContent = document.getElementById('notificationFiltersContent');
         const applyFiltersBtn = document.getElementById('applyFiltersBtn');
@@ -1525,45 +1524,40 @@
             user: ''
         };
         
-        // Open notification dialog
+        
         notificationBellBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             openNotificationDialog();
         });
         
-        // Close notification dialog
+        
         notificationDialogClose.addEventListener('click', function() {
             closeNotificationDialog();
         });
         
-        // Close when clicking overlay - REMOVED to prevent disappearing
-        // notificationOverlay.addEventListener('click', function() {
-        //     closeNotificationDialog();
-        // });
         
-        // Close with Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && isNotificationDialogOpen) {
                 closeNotificationDialog();
             }
         });
         
-        // Mark all as read
+        
         markAllReadBtn.addEventListener('click', function() {
-            // In a real app, make API call to mark all as read
+            
             document.querySelectorAll('.notification-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.dataset.status = 'read';
             });
             
-            // Update badge
+           
             updateNotificationBadge(0);
             
-            // Re-apply filters to reflect status changes
+            
             applyFilters();
         });
         
-        // Mark single notification as read when clicked
+        
         notificationList.addEventListener('click', function(e) {
             const notificationItem = e.target.closest('.notification-item');
             
@@ -1571,33 +1565,33 @@
                 notificationItem.classList.remove('unread');
                 notificationItem.dataset.status = 'read';
                 
-                // Update unread count
+               
                 const unreadCount = document.querySelectorAll('.notification-item.unread').length;
                 updateNotificationBadge(unreadCount);
                 
-                // Re-apply filters if status filter is active
+                
                 if (currentFilters.status === 'unread') {
                     applyFilters();
                 }
             }
         });
         
-        // Search functionality
+       
         notificationSearchInput.addEventListener('input', function() {
             currentFilters.searchTerm = this.value.toLowerCase().trim();
             
-            // Show/hide clear button
+            
             if (currentFilters.searchTerm) {
                 notificationClearSearch.style.display = 'block';
             } else {
                 notificationClearSearch.style.display = 'none';
             }
             
-            // Apply filters
+            
             applyFilters();
         });
         
-        // Clear search
+          
         notificationClearSearch.addEventListener('click', function() {
             notificationSearchInput.value = '';
             currentFilters.searchTerm = '';

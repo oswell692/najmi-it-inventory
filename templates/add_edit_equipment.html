@@ -148,6 +148,7 @@
         </div>
 
       {% else %}
+        <!-- PRINTER FORM - ONLY ADDED IMAGE UPLOAD, EVERYTHING ELSE UNCHANGED -->
         <div class="mb-3">
           <label class="form-label">Printer Name</label>
           <input name="printer_name" class="form-control" required value="{{ item['name'] if item else '' }}">
@@ -168,6 +169,51 @@
             <option value="backup" {% if item and item['status']=='backup' %}selected{% endif %}>Backup</option>
           </select>
         </div>
+
+        <!-- ADDED: Image Upload Section for Printers -->
+        <div class="mb-3">
+          <label class="form-label">Printer Images (Optional - Max 5 images)</label>
+          
+          <!-- Existing Images Display -->
+          <div id="existingImagesPrinter" class="mb-3">
+            {% if action == 'Edit' and item and item.images %}
+              {% set existing_images = [] %}
+              {% if item.images %}
+                {% if item.images is string %}
+                  {% set existing_images = item.images|fromjson %}
+                {% else %}
+                  {% set existing_images = item.images %}
+                {% endif %}
+              {% endif %}
+              
+              {% for image_path in existing_images %}
+              <div class="existing-image-item mb-2 d-inline-block me-2 position-relative">
+                <img src="{{ url_for('static', filename=image_path) }}" alt="Printer image" class="img-thumbnail" style="width: 150px; height: 100px; object-fit: cover;">
+                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removeExistingImage(this, '{{ image_path }}')">
+                  <i class="bi bi-x"></i>
+                </button>
+                <input type="hidden" name="existing_images" value="{{ image_path }}">
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <!-- New Image Upload -->
+          <div id="imageUploadAreaPrinter">
+            <div class="image-upload-item mb-2">
+              <input type="file" name="printer_images" class="form-control" accept="image/*" onchange="previewImage(this)">
+              <div class="image-preview mt-1"></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addImageField()" id="addImageBtnPrinter">
+            <i class="bi bi-plus-circle"></i> Add Another Image
+          </button>
+          <small class="form-text text-muted">You can upload up to 5 images. Accepted formats: JPG, PNG, GIF</small>
+          
+          <!-- Hidden field to track deleted images -->
+          <input type="hidden" name="deleted_images" id="deletedImages" value="">
+        </div>
+
         <div class="mb-3">
           <label class="form-label">Notes</label>
           <textarea name="notes" class="form-control">{{ item['notes'] if item else '' }}</textarea>
@@ -178,6 +224,7 @@
         {% if action == 'Edit' %}Update{% else %}Add{% endif %}
       </button>
       <a href="{% if kind == 'computer' %}{{ url_for('admin.view_computers') }}{% else %}{{ url_for('admin.view_printers') }}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </form>
   </div>
 </div>
 
@@ -221,12 +268,17 @@ const maxImages = 5;
 let deletedImages = [];
 
 function addImageField() {
+  // Determine if we're in computer or printer section
+  const isPrinter = {% if kind == 'printer' %}true{% else %}false{% endif %};
+  const imageUploadAreaId = isPrinter ? 'imageUploadAreaPrinter' : 'imageUploadArea';
+  const addImageBtnId = isPrinter ? 'addImageBtnPrinter' : 'addImageBtn';
+  
   if (imageCount < maxImages) {
-    const imageUploadArea = document.getElementById('imageUploadArea');
+    const imageUploadArea = document.getElementById(imageUploadAreaId);
     const newImageItem = document.createElement('div');
     newImageItem.className = 'image-upload-item mb-2';
     newImageItem.innerHTML = `
-      <input type="file" name="computer_images" class="form-control" accept="image/*" onchange="previewImage(this)">
+      <input type="file" name="${isPrinter ? 'printer_images' : 'computer_images'}" class="form-control" accept="image/*" onchange="previewImage(this)">
       <button type="button" class="remove-image" onclick="removeImageField(this)">×</button>
       <div class="image-preview mt-1"></div>
     `;
@@ -234,7 +286,7 @@ function addImageField() {
     imageCount++;
     
     if (imageCount >= maxImages) {
-      document.getElementById('addImageBtn').style.display = 'none';
+      document.getElementById(addImageBtnId).style.display = 'none';
     }
   }
 }
@@ -244,7 +296,10 @@ function removeImageField(button) {
   imageItem.remove();
   imageCount--;
   
-  document.getElementById('addImageBtn').style.display = 'block';
+  // Determine if we're in computer or printer section
+  const isPrinter = {% if kind == 'printer' %}true{% else %}false{% endif %};
+  const addImageBtnId = isPrinter ? 'addImageBtnPrinter' : 'addImageBtn';
+  document.getElementById(addImageBtnId).style.display = 'block';
   
   // Update image count based on actual fields
   const imageFields = document.querySelectorAll('.image-upload-item');
@@ -305,8 +360,12 @@ function showToast(message) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  const isPrinter = {% if kind == 'printer' %}true{% else %}false{% endif %};
+  const existingImagesId = isPrinter ? 'existingImagesPrinter' : 'existingImages';
+  const addImageBtnId = isPrinter ? 'addImageBtnPrinter' : 'addImageBtn';
+  
   // Count existing images and adjust available slots
-  const existingImages = document.querySelectorAll('.existing-image-item');
+  const existingImages = document.querySelectorAll(`#${existingImagesId} .existing-image-item`);
   const existingCount = existingImages.length;
   
   // Adjust available slots for new images
@@ -314,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Hide add button if we're at max capacity
   if (existingCount + imageCount >= maxImages) {
-    document.getElementById('addImageBtn').style.display = 'none';
+    document.getElementById(addImageBtnId).style.display = 'none';
   }
   
   // Initialize deleted images array

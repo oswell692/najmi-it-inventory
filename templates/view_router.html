@@ -2,9 +2,9 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="mb-3">
+    <div class="d-flex justify-content-end mb-3">
         <a href="{{ url_for('admin.view_routers') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>Back to Routers
+            <i class="bi bi-arrow-left me-2"></i>Back
         </a>
     </div>
 
@@ -102,6 +102,26 @@
                 </div>
             </div>
 
+            <!-- Add Images Section Here -->
+            {% if router.images and router.images|length > 0 %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6>Router Images:</h6>
+                    <div class="d-flex flex-wrap gap-3 mt-2" id="imageGallery">
+                        {% for image_path in router.images %}
+                        <div class="image-item">
+                            <img src="{{ url_for('static', filename=image_path) }}" 
+                                 alt="Router image {{ loop.index }}" 
+                                 class="img-thumbnail" 
+                                 style="width: 200px; height: 150px; object-fit: cover; cursor: pointer;"
+                                 onclick="openImageModal('{{ url_for('static', filename=image_path) }}')">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             {% if router.notes %}
             <div class="row mt-3">
                 <div class="col-12">
@@ -126,6 +146,24 @@
     </div>
 </div>
 
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Router Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Router Image" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function togglePassword() {
     const passwordDisplay = document.getElementById('passwordDisplay');
@@ -144,6 +182,12 @@ function togglePassword() {
         passwordToggle.classList.add('btn-outline-secondary');
     }
 }
+
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
 </script>
 
 <style>
@@ -153,6 +197,19 @@ function togglePassword() {
     }
     .table-borderless td {
         color: #6c757d;
+    }
+    .image-item {
+        transition: transform 0.3s ease;
+    }
+    .image-item:hover {
+        transform: scale(1.05);
+    }
+    .img-thumbnail {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+    }
+    .img-thumbnail:hover {
+        border-color: #0d6efd;
     }
 </style>
 {% endblock %}
